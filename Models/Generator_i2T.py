@@ -3,6 +3,7 @@ import tensorflow as tf
 # from Generator_t2I import TextToImage
 import yaml
 
+
 # with open("./config/config.yml", "r") as ymlfile:
 #     cfg = yaml.load(ymlfile)
 
@@ -103,11 +104,11 @@ class EncoderLayer(tf.keras.layers.Layer):
         self.dropout1 = tf.keras.layers.Dropout(rate)
         self.dropout2 = tf.keras.layers.Dropout(rate)
 
-    def call(self, x, training, mask=None):
-        attn_output, _ = self.mha(x, x, x, mask)
+    def call(self, v, k, q, training, mask=None):
+        attn_output, _ = self.mha(v, k, q, mask)
         attn_output = self.dropout1(attn_output, training=training)
 
-        out1 = self.layernorm1(x + attn_output)
+        out1 = self.layernorm1(v + attn_output)
 
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
@@ -164,14 +165,15 @@ class Encoder(tf.keras.layers.Layer):
         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(rate)
 
-    def call(self, x, training, mask=None):
+    def call(self, inp, training, mask=None):
+        x = inp[:, 0, :, :]
         seq_len = tf.shape(x)[1]
         x = self.embedding(x)
         # x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
-
         for i in range(self.num_layers):
-            x = self.enc_layers[i](x, training, mask)
+            q = inp[:, i, :, :]
+            x = self.enc_layers[i](x, x, q, training, mask)
 
         return x
 
@@ -235,14 +237,14 @@ DROPOUT_RATE = 0.1
 ROW_SIZE = 8
 COL_SIZE = 8
 
-
-class Network(tf.keras.Model):
-    def __init__(self):
-        super(Network, self).__init__()
-        self.image_to_text = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
-                                         max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
-        self.text_to_image = TextToImage()
-
-    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
-        p, w = self.image_to_text(inp, tar, False, dec_padding_mask)
-        print('this is final warning')
+#
+# class Network(tf.keras.Model):
+#     def __init__(self):
+#         super(Network, self).__init__()
+#         self.image_to_text = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
+#                                          max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
+#         self.text_to_image = TextToImage()
+#
+#     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
+#         p, w = self.image_to_text(inp, tar, False, dec_padding_mask)
+#         print('this is final warning')

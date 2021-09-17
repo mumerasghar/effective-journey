@@ -6,7 +6,7 @@ from Models import *
 from data import *
 
 NUM_LAYERS = 4
-D_MODEL = 512
+D_MODEL = 2048
 DFF = 2048
 NUM_HEADS = 8
 BATCH_SIZE = 64
@@ -81,7 +81,7 @@ def i2T_loss_function(real, pred):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar, img_name, img):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -121,7 +121,7 @@ def train(dataset):
     # if ckpt_manager.latest_checkpoint:
     #     checkpoint.restore(ckpt_manager.latest_checkpoint)
     #     print('Latest checkpoint restored!!')
-    for epoch in range(1):
+    for epoch in range(30):
 
         start = time.time()
         train_loss.reset_states()
@@ -138,7 +138,7 @@ def train(dataset):
             if batch % 50 == 0:
                 print(
                     f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
-
+        i2T_generator.save_weights(f'checkpoints/transformer_{epoch}')
         print(f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
     print(f'Time taken for 1 epoch : {time.time() - start} secs\n')
 
