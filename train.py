@@ -1,12 +1,14 @@
+from Models import *
+from data.create_dataset import create_dataset, tokenizer
+from inference import evaluate
+
 import time
 import warnings
 
 warnings.filterwarnings("ignore")
-from Models import *
-from data import *
 
 NUM_LAYERS = 4
-D_MODEL = 2048
+D_MODEL = 512
 DFF = 2048
 NUM_HEADS = 8
 BATCH_SIZE = 64
@@ -87,8 +89,16 @@ def train_step(img_tensor, tar, img_name, img):
     tar_real = tar[:, 1:]
 
     dec_mask = create_masks_decoder(tar_inp)
+    # tf.GradientTape() as d_tape,
+    # tf.GradientTape() as gen_tape,
+    # tf.GradientTape() as disc_tape,
+    # tf.GradientTape() as rnn,
+    # tf.GradientTape() as d_tape,
+    # tf.GradientTape() as gen_tape,
+    # tf.GradientTape() as disc_tape,
+    # tf.GradientTape() as rnn
 
-    with tf.GradientTape() as tape, tf.GradientTape() as d_tape, tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape, tf.GradientTape() as rnn:
+    with tf.GradientTape() as tape:
         # predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         predictions, _ = i2T_generator(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
@@ -106,22 +116,28 @@ def train_step(img_tensor, tar, img_name, img):
     train_accuracy(tar_real, predictions)
 
 
-def train(dataset):
-    # checkpoint_dir = 'checkpoints'
-    # checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    # checkpoint = tf.train.Checkpoint(
-    #     i2T_generator_optimizer=i2T_g_optimizer,
-    #     i2T_discriminator_optimizer=i2T_c_optimizer,
-    #     i2T_generator=i2T_generator,
-    #     i2T_discriminator=i2T_critic)
-    #
-    # ckpt_manager = tf.train.CheckpointManager(
-    #     checkpoint, checkpoint_dir, max_to_keep=3)
-    #
-    # if ckpt_manager.latest_checkpoint:
-    #     checkpoint.restore(ckpt_manager.latest_checkpoint)
-    #     print('Latest checkpoint restored!!')
-    for epoch in range(30):
+def generate_caption():
+    for img_tensor, cap, img_name, image in i_data.take(1):
+        evaluate(img_tensor, img_name, cap, tokenizer, i2T_generator, show=False)
+        break
+
+
+def train(dataset, epochs, t_break=False):
+    checkpoint_dir = 'checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(
+        i2T_generator_optimizer=i2T_g_optimizer,
+        i2T_discriminator_optimizer=i2T_c_optimizer,
+        i2T_generator=i2T_generator,
+        i2T_discriminator=i2T_critic)
+
+    ckpt_manager = tf.train.CheckpointManager(
+        checkpoint, checkpoint_dir, max_to_keep=1)
+
+    if ckpt_manager.latest_checkpoint:
+        checkpoint.restore(ckpt_manager.latest_checkpoint)
+        print('Latest checkpoint restored!!')
+    for epoch in range(epochs):
 
         start = time.time()
         train_loss.reset_states()
@@ -130,17 +146,21 @@ def train(dataset):
         for (batch, (img_tensor, tar, img_name, img)) in enumerate(dataset):
             train_step(img_tensor, tar, img_name, img)
 
-            # if (epoch + 1) % 40 == 0:
-            #     ckpt_save_path = ckpt_manager.save()
-            #     print('Saving checkpoint for epoch {} at {}'.format(
-            #         epoch + 1, ckpt_save_path))
-
             if batch % 50 == 0:
                 print(
                     f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
-        i2T_generator.save_weights(f'checkpoints/transformer_{epoch}')
+
+            if t_break:
+                break
+
+        if t_break:
+            break
+        generate_caption()
+        ckpt_save_path = ckpt_manager.save()
+        print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
+
         print(f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
-    print(f'Time taken for 1 epoch : {time.time() - start} secs\n')
+        print(f'Time taken for 1 epoch : {time.time() - start} secs\n')
 
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################
@@ -157,5 +177,9 @@ i2T_c_optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.9
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name='train_accuracy')
+dataset, i_dataset = create_dataset()
 
-train(dataset)
+if __name__ == '__main__':
+    train(dataset, 30)
+else:
+    train(i_dataset, 1, True)

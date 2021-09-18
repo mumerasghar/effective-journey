@@ -1,5 +1,2 @@
-Dataset
-checkpoints
-Models/
-Models/*
-data
+__pycache__/*
+Dataset/*

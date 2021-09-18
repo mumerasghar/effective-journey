@@ -160,6 +160,8 @@ class Encoder(tf.keras.layers.Layer):
         self.embedding = tf.keras.layers.Dense(self.d_model,
                                                activation='relu',
                                                kernel_initializer='glorot_uniform')
+
+        # self.convert_to = tf.keras.layers.Dense(self.d_model)
         # self.pos_encoding = positional_encoding_2d(8, 8, self.d_model)
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
@@ -172,8 +174,8 @@ class Encoder(tf.keras.layers.Layer):
         # x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
         for i in range(self.num_layers):
-            q = inp[:, i, :, :]
-            x = self.enc_layers[i](x, x, q, training, mask)
+            # q = self.convert_to(inp[:, i, :, :])
+            x = self.enc_layers[i](x, x, x, training, mask)
 
         return x
 
