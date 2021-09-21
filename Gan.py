@@ -211,7 +211,7 @@ i_data = i_data.map(
     ),
     num_parallel_calls=tf.data.experimental.AUTOTUNE,
 )
-i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
+i_data = i_data.shuffle(BUFFER_SIZE).batch(64)
 i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
 
@@ -809,6 +809,9 @@ def main(epochs, o_break=False):
             if o_break:
                 break
 
+        if o_break:
+                break
+
         with open("result.txt", "a") as f:
             name, f_cap, r_cap = generate_caption()
             f.write(
@@ -834,6 +837,6 @@ else:
 
     main(1, True)
     print("loading transformer weights")
-    transformer.load_weights("checkpoints/transformer_prev_29")
-    while True:
-        generate_caption()
+    transformer.load_weights("checkpoints/transformer_final_weights")
+    # while True:
+    #     generate_caption()
