@@ -1,6 +1,6 @@
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from clean_data import all_captions, all_img_name_vector
+from .clean_data import all_captions, all_img_name_vector
 
 import tensorflow as tf
 import warnings
@@ -8,7 +8,7 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 BUFFER_SIZE = 100
 
 

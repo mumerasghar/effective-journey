@@ -1,0 +1,112 @@
+Epoch 1, Batch 999, Loss 5.023559093475342, Accuracy 16.7660
+Time taken for 1 epoch : 686.6135468482971 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3582465732_78f77f34ae.jpg'],
+r_cap:  <start>  a  woman  sitting  on  a  mini  trampoline  tossing  a  water  bottle  in  the  air  <end>
+fake:  a  little  girl  in  a  red  shirt  is  sitting  on  a  bench
+
+Epoch 2, Batch 999, Loss 4.125664234161377, Accuracy 16.3498
+Time taken for 1 epoch : 715.2905697822571 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2478929971_9eb6c074b6.jpg'],
+r_cap:  <start>  the  six  kids  are  in  the  shade  of  a  leafy  green  tree  <end>
+fake:  a  woman  in  a  red  shirt  and  a  black  and  white  shirt  is  standing  in  front  of  a  building
+
+Epoch 3, Batch 999, Loss 3.855943441390991, Accuracy 16.2549
+Time taken for 1 epoch : 707.9900662899017 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/566794440_f9ec673a2f.jpg'],
+r_cap:  <start>  girls  with  baseball  gloves  walking  across  a  baseball  field  <end>
+fake:  a  man  in  a  white  shirt  and  white  shorts  is  playing  a  game
+
+Epoch 4, Batch 999, Loss 3.5827996730804443, Accuracy 16.1804
+Time taken for 1 epoch : 713.5918800830841 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3206058778_7053ee6b52.jpg'],
+r_cap:  <start>  a  girl  with  ice  skate  sits  on  a  fence  checking  her  cellphone  while  her  friend  looks  on  <end>
+fake:  a  woman  in  a  white  dress  and  a  black  shirt  is  holding  a  girl  in  a  white  dress
+
+Epoch 5, Batch 999, Loss 3.6752753257751465, Accuracy 16.1105
+Time taken for 1 epoch : 708.8717837333679 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/484896012_7787d04f41.jpg'],
+r_cap:  <start>  a  small  boy  wearing  red  kicks  a  soccer  ball  above  the  grass  <end>
+fake:  a  boy  in  a  red  shirt  is  playing  with  a  soccer  ball
+
+Epoch 6, Batch 999, Loss 3.2915074825286865, Accuracy 16.0681
+Time taken for 1 epoch : 712.7844710350037 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2478929971_9eb6c074b6.jpg'],
+r_cap:  <start>  the  six  kids  are  in  the  shade  of  a  leafy  green  tree  <end>
+fake:  a  woman  in  a  red  shirt  and  a  black  and  white  shirt  is  standing  in  front  of  a  building  a  group  of  children  are  standing  in  front  of  a  building
+
+Epoch 7, Batch 999, Loss 3.333214282989502, Accuracy 16.0346
+Time taken for 1 epoch : 712.6037299633026 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3626964430_cb5c7e5acc.jpg'],
+r_cap:  <start>  the  men  stand  together  out  on  the  lawn  <end>
+fake:  a  group  of  people  are  playing  soccer  in  front  of  a  white  building
+
+Epoch 8, Batch 999, Loss 3.0985465049743652, Accuracy 16.0143
+Time taken for 1 epoch : 707.9213337898254 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/256292144_b53aadae27.jpg'],
+r_cap:  <start>  a  brown  and  white  dog  is  running  across  the  grass  <end>
+fake:  a  dog  runs  through  a  field
+
+Epoch 9, Batch 999, Loss 2.8081400394439697, Accuracy 15.9989
+Time taken for 1 epoch : 710.7278339862823 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3737711435_113ccd0a52.jpg'],
+r_cap:  <start>  a  girl  throws  stones  and  watches  the  lake  splash  <end>
+fake:  a  girl  in  a  pink  shirt  is  swimming  in  a  pool
+
+Epoch 10, Batch 999, Loss 2.836447238922119, Accuracy 15.9807
+Time taken for 1 epoch : 713.7839691638947 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3574930742_9081bd2426.jpg'],
+r_cap:  <start>  a  <unk>  is  asleep  at  a  populated  library  <end>
+fake:  a  man  and  a  woman  are  sitting  at  a  table  in  front  of  a  large  store
+
+Epoch 11, Batch 999, Loss 2.6113834381103516, Accuracy 15.9621
+Time taken for 1 epoch : 718.2633767127991 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3178489390_13a6ae7524.jpg'],
+r_cap:  <start>  two  young  boys  playing  with  ducks  near  the  water  <end>
+fake:  two  boys  play  soccer  on  the  beach
+
+Epoch 12, Batch 999, Loss 2.4842796325683594, Accuracy 15.9437
+Time taken for 1 epoch : 711.3276672363281 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3240048764_acce8af2a5.jpg'],
+r_cap:  <start>  two  people  on  cots  watching  the  water  at  twilight  <end>
+fake:  two  men  sit  on  a  dock  near  a  lake  and  watch  the  sunset
+
+Epoch 13, Batch 999, Loss 2.762967586517334, Accuracy 15.9513
+Time taken for 1 epoch : 710.9862396717072 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/484896012_7787d04f41.jpg'],
+r_cap:  <start>  a  small  boy  wearing  red  kicks  a  soccer  ball  above  the  grass  <end>
+fake:  a  boy  in  a  red  shirt  is  playing  with  a  soccer  ball  a  boy  in  a  blue  and  white  soccer  uniform  is  chasing  a  ball
+
+Epoch 14, Batch 999, Loss 2.7489089965820312, Accuracy 15.9544
+Time taken for 1 epoch : 709.181155204773 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/544576742_283b65fa0d.jpg'],
+r_cap:  <start>  woman  goes  rock  climbing  <end>
+fake:  a  man  in  a  red  shirt  is  climbing  up  a  rock
+

@@ -108,34 +108,19 @@ for annot in data['filename']:
     all_img_name_vector.append(full_image_path)
 
 
-# def data_limiter(num, total_captions, all_img_name_vector):
-#     train_captions, img_name_vector = shuffle(total_captions, all_img_name_vector, random_state=1)
-#     train_captions = train_captions[:num]
-#     img_name_vector = img_name_vector[:num]
-#     return train_captions, img_name_vector
-#
-#
-# train_captions, img_name_vector = data_limiter(40000, all_captions, all_img_name_vector)
-
-
 def load_image(image_path):
     print(image_path)
     img = tf.io.read_file(image_path)
     img = tf.image.decode_jpeg(img, channels=3)
 
     img = tf.image.resize(img, (299, 299))
-    img_inception = tf.keras.applications.inception_v3.preprocess_input(img)
-    img = tf.cast(img, tf.uint8)
 
-    gray = tf.image.rgb_to_grayscale(
-        img, name=None
-    )
+    gray = tf.image.rgb_to_grayscale(img, name=None)
+
     gray = tf.stack([gray] * 3, axis=-1)
-    gray = tf.reshape(
-        gray, (299, 299, 3), name=None
-    )
+    gray = tf.reshape(gray, (299, 299, 3), name=None)
 
-    return img, image_path, img_inception, gray
+    return img, image_path, gray
 
 
 input_shape = (299, 299, 3)
@@ -145,8 +130,6 @@ inputs = keras.Input(shape=input_shape)
 flip_horizontal = layers.experimental.preprocessing.RandomFlip("horizontal")(inputs)
 rnadom_contrast = layers.experimental.preprocessing.RandomContrast(factor=0.5)(inputs)
 
-flip_horizontal = layers.experimental.preprocessing.Rescaling(1.0 / 255)(flip_horizontal)
-rnadom_contrast = layers.experimental.preprocessing.Rescaling(1.0 / 255)(rnadom_contrast)
 # Add the rest of the model
 outputs_flip_horizontal = flip_horizontal
 outputs_rnadom_contrast = rnadom_contrast
@@ -159,32 +142,36 @@ image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
 
 encode_train = sorted(set(all_img_name_vector))
 image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
-image_dataset = image_dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(64)
+image_dataset = image_dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(128)
 
 print('hello')
-x = 0
-for idx, (img, path, img_inception, gray) in enumerate(image_dataset):
-    batch_features = model(img)
+for idx, (img, path, gray) in enumerate(image_dataset):
+
+    bf_flip_inception, bf_contrast_inception = model(img)
+
+    img_inception = tf.keras.applications.inception_v3.preprocess_input(img)
+    gray_inception = tf.keras.applications.inception_v3.preprocess_input(gray)
+    bf_flip_inception = tf.keras.applications.inception_v3.preprocess_input(bf_flip_inception)
+    bf_contrast_inception = tf.keras.applications.inception_v3.preprocess_input(bf_contrast_inception)
+
     batch_features_inception = image_features_extract_model(img_inception)
     batch_features_inception = tf.reshape(batch_features_inception,
                                           (batch_features_inception.shape[0], -1, batch_features_inception.shape[3]))
 
-    batch_features_FH = image_features_extract_model(batch_features[0])
+    batch_features_FH = image_features_extract_model(bf_flip_inception)
     batch_features_FH = tf.reshape(batch_features_FH,
                                    (batch_features_FH.shape[0], -1, batch_features_FH.shape[3]))
 
-    batch_features_CN = image_features_extract_model(batch_features[1])
+    batch_features_CN = image_features_extract_model(bf_contrast_inception)
     batch_features_CN = tf.reshape(batch_features_CN,
                                    (batch_features_CN.shape[0], -1, batch_features_CN.shape[3]))
 
-    batch_features_gray = image_features_extract_model(gray)
+    batch_features_gray = image_features_extract_model(gray_inception)
     batch_features_gray = tf.reshape(batch_features_gray,
                                      (batch_features_gray.shape[0], -1, batch_features_gray.shape[3]))
     print(f'batch: {idx}')
     for FH, CN, p, inception, gray_features in zip(batch_features_FH, batch_features_CN, path, batch_features_inception,
                                                    batch_features_gray):
-        a = tf.stack([FH, CN, inception, gray_features])
-        x = x + 1
-
+        a = tf.stack([inception, FH, gray_features, CN])
         path_of_feature = p.numpy().decode("utf-8")
         np.save(path_of_feature, a.numpy())

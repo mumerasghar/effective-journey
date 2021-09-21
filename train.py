@@ -2,6 +2,7 @@ from Models import *
 from data.create_dataset import create_dataset, tokenizer
 from inference import evaluate
 
+import os
 import time
 import warnings
 
@@ -117,7 +118,7 @@ def train_step(img_tensor, tar, img_name, img):
 
 
 def generate_caption():
-    for img_tensor, cap, img_name, image in i_data.take(1):
+    for img_tensor, cap, img_name, image in i_dataset.take(1):
         evaluate(img_tensor, img_name, cap, tokenizer, i2T_generator, show=False)
         break
 

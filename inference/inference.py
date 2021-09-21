@@ -5,7 +5,7 @@ from PIL import Image
 import matplotlib
 from matplotlib import pyplot as plt
 
-matplotlib.use("TkAgg")
+# matplotlib.use("TkAgg")
 results = {}
 tokenizer = None
 # transformer = None
@@ -76,11 +76,16 @@ def evaluate(image, names, cap_real, tokenize, transformer, show=True):
             break
         d_real_cap.append(tokenizer.index_word[i])
 
-    print(f'\nReal caption: {" ".join([f" {i}" for i in d_real_cap])}')
-    print(f'Gen  caption: {" ".join([f" {i}" for i in l[0]])}')
+    r_cap = " ".join([f" {i}" for i in d_real_cap])
+    f_cap = " ".join([f" {i}" for i in l[0]])
+    print(f'\nReal caption: {r_cap}')
+    print(f'Gen  caption: {f_cap}')
     print('\n\n')
+
     if show:
         plt.figure()
         img = np.array(Image.open(names.numpy()[0].decode('utf-8')))
         plt.imshow(img)
         plt.show()
+
+    return f_cap, r_cap, names
