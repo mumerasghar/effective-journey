@@ -211,7 +211,7 @@ i_data = i_data.map(
     ),
     num_parallel_calls=tf.data.experimental.AUTOTUNE,
 )
-i_data = i_data.shuffle(BUFFER_SIZE).batch(64)
+i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
 i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
 
@@ -434,30 +434,28 @@ class PreAttention(tf.keras.layers.Layer):
         super().__init__()
 
         self.block1 = ConvBlock(s)
-        self.conv1x1_1 = SpectralNormalization(
-            tf.keras.layers.Conv2D(s // 2, 1, use_bias=False)
-        )
+        self.conv1x1_1 = SpectralNormalization(tf.keras.layers.Conv2D(s // 2, 1, use_bias=False))
         self.dropout1 = tf.keras.layers.Dropout(rate)
-        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layer_norm_1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
 
-        self.block2 = ConvBlock(s/2)
-        self.conv1x1_2 = SpectralNormalization(
-            tf.keras.layers.Conv2D(s // 4, 1, use_bias=False)
-        )
+        self.block2 = ConvBlock(s / 2)
+        self.conv1x1_2 = SpectralNormalization(tf.keras.layers.Conv2D(s // 4, 1, use_bias=False))
         self.dropout2 = tf.keras.layers.Dropout(rate)
-        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layer_norm_2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+
+        self.gamma1 = tf.Variable(tf.zeros(1))
+        self.gamma2 = tf.Variable(tf.zeros(1))
 
     def call(self, x):
         x = tf.reshape(x, (-1, 8, 8, 2048))
-        activation = tf.keras.activations.relu
-
+        activation = tf.keras.activations.softmax
         _x = self.block1(x)
-        x = _x + x
-        x = self.layernorm1(activation(self.dropout1(self.conv1x1_1(x))))
+        x = self.gamma1 * _x + x
+        x = activation(self.layer_norm_1(self.dropout1(self.conv1x1_1(x))))
 
         _x = self.block2(x)
-        x = _x + x
-        x = self.layernorm2(activation(self.dropout2(self.conv1x1_2(x))))
+        x = self.gamma2 * _x + x
+        x = activation(self.layer_norm_2(self.dropout2(self.conv1x1_2(x))))
 
         x = tf.reshape(x, shape=(-1, 64, 512))
         return x
@@ -465,14 +463,14 @@ class PreAttention(tf.keras.layers.Layer):
 
 class Encoder(tf.keras.layers.Layer):
     def __init__(
-        self, num_layers, d_model, num_heads, dff, row_size, col_size, rate=0.1
+            self, num_layers, d_model, num_heads, dff, row_size, col_size, rate=0.1
     ):
         super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
 
-        # self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
-        self.embedding = PreAttention(2048)
+        self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
+        # self.embedding = PreAttention(2048)
         # self.pos_encoding = positional_encoding_2d(row_size, col_size, self.d_model)
 
         self.enc_layers = [
@@ -507,14 +505,14 @@ class Encoder(tf.keras.layers.Layer):
 
 class Decoder(tf.keras.layers.Layer):
     def __init__(
-        self,
-        num_layers,
-        d_model,
-        num_heads,
-        dff,
-        target_vocab_size,
-        maximum_position_encoding,
-        rate=0.1,
+            self,
+            num_layers,
+            d_model,
+            num_heads,
+            dff,
+            target_vocab_size,
+            maximum_position_encoding,
+            rate=0.1,
     ):
         super().__init__()
 
@@ -549,46 +547,16 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    def __init__(
-        self,
-        num_layers,
-        d_model,
-        num_heads,
-        dff,
-        row_size,
-        col_size,
-        target_vocab_size,
-        max_pos_encoding,
-        rate=0.1,
-    ):
+    def __init__(self, num_layers, d_model, num_heads, dff, row_size, col_size, target_vocab_size, max_pos_encoding,
+                 rate=0.1, ):
         super().__init__()
-        self.encoder = Encoder(
-            num_layers, d_model, num_heads, dff, row_size, col_size, rate
-        )
-        self.decoder = Decoder(
-            num_layers,
-            d_model,
-            num_heads,
-            dff,
-            target_vocab_size,
-            max_pos_encoding,
-            rate,
-        )
+        self.encoder = Encoder(num_layers, d_model, num_heads, dff, row_size, col_size, rate)
+        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-    def call(
-        self,
-        inp,
-        tar,
-        training,
-        look_ahead_mask=None,
-        dec_padding_mask=None,
-        enc_padding_mask=None,
-    ):
+    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None, ):
         enc_output = self.encoder(inp, training, enc_padding_mask)
-        dec_output, attention_weights = self.decoder(
-            tar, enc_output, training, look_ahead_mask, dec_padding_mask
-        )
+        dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
         return final_output, attention_weights
 
@@ -764,10 +732,10 @@ def train_step(img_tensor, tar):
     train_accuracy(tar_real, predictions)
 
 
-def generate_caption():
+def generate_caption(show=False):
     for img_tensor, cap, img_name, image in i_data.take(1):
         f_cap, r_cap, name = evaluate(
-            img_tensor, img_name, cap, tokenizer, transformer, show=False
+            img_tensor, img_name, cap, tokenizer, transformer, show
         )
         return name, f_cap, r_cap
 
@@ -778,20 +746,20 @@ print("Going for train")
 def main(epochs, o_break=False):
     print("going for training")
 
-    checkpoint_dir = "checkpoints"
-    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-    checkpoint = tf.train.Checkpoint(
-        opt_transformer=optimizer,
-        opt_discriminator=optimizer_c,
-        transformer=transformer,
-        critic=critic,
-    )
-
-    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=1)
-
-    if ckpt_manager.latest_checkpoint:
-        checkpoint.restore(ckpt_manager.latest_checkpoint)
-        print("Latest checkpoint restored!!")
+    # checkpoint_dir = "checkpoints"
+    # checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    # checkpoint = tf.train.Checkpoint(
+    #     opt_transformer=optimizer,
+    #     opt_discriminator=optimizer_c,
+    #     transformer=transformer,
+    #     critic=critic,
+    # )
+    #
+    # ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=1)
+    #
+    # if ckpt_manager.latest_checkpoint:
+    #     checkpoint.restore(ckpt_manager.latest_checkpoint)
+    #     print("Latest checkpoint restored!!")
 
     for epoch in range(epochs):
 
@@ -810,7 +778,7 @@ def main(epochs, o_break=False):
                 break
 
         if o_break:
-                break
+            break
 
         with open("result.txt", "a") as f:
             name, f_cap, r_cap = generate_caption()
@@ -825,7 +793,9 @@ def main(epochs, o_break=False):
         )
         print(f"Time taken for 1 epoch : {time.time() - start} secs\n\n\n")
 
-        ckpt_save_path = ckpt_manager.save()
+        # ckpt_save_path = ckpt_manager.save()
+    if o_break:
+        return
     transformer.save_weights(f"checkpoints/transformer_final_weights_{epoch}")
 
 
@@ -834,9 +804,93 @@ if __name__ == "__main__":
     main(30, False)
 
 else:
+    import matplotlib
+    from matplotlib import pyplot as plt
+    from PIL import Image
 
     main(1, True)
     print("loading transformer weights")
-    transformer.load_weights("checkpoints/transformer_final_weights")
-    # while True:
-    #     generate_caption()
+    transformer.load_weights(f"weights/transformer_final_weights_{29}")
+
+    import warnings
+
+    warnings.filterwarnings("ignore")
+
+    from sklearn.utils import shuffle
+
+    results = {}
+
+
+    def append_to_list(id, name):
+
+        word = tokenizer.index_word[int(id[0])]
+        if name in results.keys():
+            if results[name][len(results[name]) - 1] != '<end>':
+                results[name].append(word)
+        else:
+            results[name] = [word]
+
+        return results[name]
+
+
+    def i_map_func(img_name):
+        img_tensor = np.load(img_name.decode('utf-8') + '.npy')
+        return img_tensor, img_name
+
+
+    def create_padding_mask(seq):
+        seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
+        return seq[:, tf.newaxis, tf.newaxis, :]
+
+
+    def create_look_ahead_mask(size):
+        mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+        return mask
+
+
+    def create_masks_decoder(tar):
+        look_ahead_mask = create_look_ahead_mask(tf.shape(tar)[1])
+        dec_target_padding_mask = create_padding_mask(tar)
+        combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
+        return combined_mask
+
+
+    def evaluate(image, names, tokenize, transformer, show=True):
+        global tokenizer
+        tokenizer = tokenize
+        start_token = tokenizer.word_index['<start>']
+        end_token = tokenizer.word_index['<end>']
+        decoder_input = [start_token]
+        decoder_input = np.repeat(decoder_input, repeats=image.shape[0])
+        output = tf.cast(tf.expand_dims(decoder_input, 1), dtype=tf.int32)  # tokens
+
+        for i in range(40):
+            dec_mask = create_masks_decoder(output)
+            predictions, attention_weights = transformer(image, output, False, dec_mask)
+            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+            if tf.reduce_all(tf.math.equal(predicted_id, end_token)):
+                break
+            l = list(map(append_to_list, predicted_id.numpy(), names.numpy()))
+            output = tf.concat([output, predicted_id], axis=-1)
+
+        f_cap = " ".join([f" {i}" for i in l[0]])
+        print(f'Gen  caption: {f_cap}')
+        print('\n\n')
+
+        # if show:
+        #     plt.figure()
+        #     img = np.array(Image.open(names.numpy().decode('utf-8')))
+        #     plt.imshow(img)
+        #     plt.show()
+
+        return f_cap, names
+
+
+    img_tensor, name = i_map_func(b'./COCO_val2014_000000458755.jpg')
+    img_tensor = tf.reshape(img_tensor, shape=(-1, 4, 64, 2048))
+    # print(type(img_tensor))
+    # print(img_tensor.shape)
+    # evaluate(img_tensor, name)
+    # print(results)
+    f_cap, name = evaluate(img_tensor, tf.convert_to_tensor(name), tokenizer, transformer)

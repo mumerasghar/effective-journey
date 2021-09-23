@@ -1,112 +1,248 @@
-Epoch 1, Batch 999, Loss 5.023559093475342, Accuracy 16.7660
-Time taken for 1 epoch : 686.6135468482971 secs
+Epoch 1, Batch 999, Loss 5.0230841636657715, Accuracy 16.7356
+Time taken for 1 epoch : 484.71928906440735 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/3582465732_78f77f34ae.jpg'],
-r_cap:  <start>  a  woman  sitting  on  a  mini  trampoline  tossing  a  water  bottle  in  the  air  <end>
-fake:  a  little  girl  in  a  red  shirt  is  sitting  on  a  bench
+img_name:[b'./Dataset/Flicker8k_Dataset/3569755200_cef7ee2233.jpg'],
+r_cap:  <start>  the  two  young  women  are  laughing  outdoors  by  a  tree  trunk  <end>
+fake:  a  man  in  a  red  shirt  and  white  shirt  is  sitting  on  a  street
 
-Epoch 2, Batch 999, Loss 4.125664234161377, Accuracy 16.3498
-Time taken for 1 epoch : 715.2905697822571 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/2478929971_9eb6c074b6.jpg'],
-r_cap:  <start>  the  six  kids  are  in  the  shade  of  a  leafy  green  tree  <end>
-fake:  a  woman  in  a  red  shirt  and  a  black  and  white  shirt  is  standing  in  front  of  a  building
-
-Epoch 3, Batch 999, Loss 3.855943441390991, Accuracy 16.2549
-Time taken for 1 epoch : 707.9900662899017 secs
+Epoch 2, Batch 999, Loss 4.202586650848389, Accuracy 16.4068
+Time taken for 1 epoch : 468.73001074790955 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/566794440_f9ec673a2f.jpg'],
-r_cap:  <start>  girls  with  baseball  gloves  walking  across  a  baseball  field  <end>
-fake:  a  man  in  a  white  shirt  and  white  shorts  is  playing  a  game
+img_name:[b'./Dataset/Flicker8k_Dataset/445861800_75fc6a8c16.jpg'],
+r_cap:  <start>  three  men  walking  on  a  sidewalk  in  a  city  <end>
+fake:  a  man  in  a  black  shirt  and  a  woman  in  a  black  jacket
 
-Epoch 4, Batch 999, Loss 3.5827996730804443, Accuracy 16.1804
-Time taken for 1 epoch : 713.5918800830841 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/3206058778_7053ee6b52.jpg'],
-r_cap:  <start>  a  girl  with  ice  skate  sits  on  a  fence  checking  her  cellphone  while  her  friend  looks  on  <end>
-fake:  a  woman  in  a  white  dress  and  a  black  shirt  is  holding  a  girl  in  a  white  dress
-
-Epoch 5, Batch 999, Loss 3.6752753257751465, Accuracy 16.1105
-Time taken for 1 epoch : 708.8717837333679 secs
+Epoch 3, Batch 999, Loss 3.876326084136963, Accuracy 16.3458
+Time taken for 1 epoch : 461.43674659729004 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/484896012_7787d04f41.jpg'],
-r_cap:  <start>  a  small  boy  wearing  red  kicks  a  soccer  ball  above  the  grass  <end>
-fake:  a  boy  in  a  red  shirt  is  playing  with  a  soccer  ball
+img_name:[b'./Dataset/Flicker8k_Dataset/2673564214_3a9598804f.jpg'],
+r_cap:  <start>  children  playing  in  a  green  and  blue  bounce  house  <end>
+fake:  a  little  boy  in  a  blue  shirt  is  playing  with  a  toy
 
-Epoch 6, Batch 999, Loss 3.2915074825286865, Accuracy 16.0681
-Time taken for 1 epoch : 712.7844710350037 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/2478929971_9eb6c074b6.jpg'],
-r_cap:  <start>  the  six  kids  are  in  the  shade  of  a  leafy  green  tree  <end>
-fake:  a  woman  in  a  red  shirt  and  a  black  and  white  shirt  is  standing  in  front  of  a  building  a  group  of  children  are  standing  in  front  of  a  building
-
-Epoch 7, Batch 999, Loss 3.333214282989502, Accuracy 16.0346
-Time taken for 1 epoch : 712.6037299633026 secs
+Epoch 4, Batch 999, Loss 3.6980996131896973, Accuracy 16.2928
+Time taken for 1 epoch : 457.58038210868835 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/3626964430_cb5c7e5acc.jpg'],
-r_cap:  <start>  the  men  stand  together  out  on  the  lawn  <end>
-fake:  a  group  of  people  are  playing  soccer  in  front  of  a  white  building
+img_name:[b'./Dataset/Flicker8k_Dataset/273248777_eaf0288ab3.jpg'],
+r_cap:  <start>  a  football  player  in  a  full  stadium  jumping  and  recieving  a  football  <end>
+fake:  a  football  player  in  a  red  uniform  is  running  on  the  field
 
-Epoch 8, Batch 999, Loss 3.0985465049743652, Accuracy 16.0143
-Time taken for 1 epoch : 707.9213337898254 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/256292144_b53aadae27.jpg'],
-r_cap:  <start>  a  brown  and  white  dog  is  running  across  the  grass  <end>
-fake:  a  dog  runs  through  a  field
-
-Epoch 9, Batch 999, Loss 2.8081400394439697, Accuracy 15.9989
-Time taken for 1 epoch : 710.7278339862823 secs
+Epoch 5, Batch 999, Loss 3.516601324081421, Accuracy 16.2559
+Time taken for 1 epoch : 452.65856194496155 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/3737711435_113ccd0a52.jpg'],
-r_cap:  <start>  a  girl  throws  stones  and  watches  the  lake  splash  <end>
-fake:  a  girl  in  a  pink  shirt  is  swimming  in  a  pool
+img_name:[b'./Dataset/Flicker8k_Dataset/3441701164_6dbbdf1bce.jpg'],
+r_cap:  <start>  a  dirt  bike  rider  holds  up  his  finger  <end>
+fake:  a  motorcycle  rider  is  being  ridden  on  a  track
 
-Epoch 10, Batch 999, Loss 2.836447238922119, Accuracy 15.9807
-Time taken for 1 epoch : 713.7839691638947 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/3574930742_9081bd2426.jpg'],
-r_cap:  <start>  a  <unk>  is  asleep  at  a  populated  library  <end>
-fake:  a  man  and  a  woman  are  sitting  at  a  table  in  front  of  a  large  store
-
-Epoch 11, Batch 999, Loss 2.6113834381103516, Accuracy 15.9621
-Time taken for 1 epoch : 718.2633767127991 secs
+Epoch 6, Batch 999, Loss 3.6249732971191406, Accuracy 16.2139
+Time taken for 1 epoch : 441.79273986816406 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/3178489390_13a6ae7524.jpg'],
-r_cap:  <start>  two  young  boys  playing  with  ducks  near  the  water  <end>
-fake:  two  boys  play  soccer  on  the  beach
+img_name:[b'./Dataset/Flicker8k_Dataset/700884207_d3ec546494.jpg'],
+r_cap:  <start>  a  baby  is  dressed  up  in  pink  gear  and  staring  while  an  adult  holds  her  steady  <end>
+fake:  a  woman  in  a  blue  shirt  is  sitting  on  a  red  couch
 
-Epoch 12, Batch 999, Loss 2.4842796325683594, Accuracy 15.9437
-Time taken for 1 epoch : 711.3276672363281 secs
-
-
-img_name:[b'./Dataset/Flicker8k_Dataset/3240048764_acce8af2a5.jpg'],
-r_cap:  <start>  two  people  on  cots  watching  the  water  at  twilight  <end>
-fake:  two  men  sit  on  a  dock  near  a  lake  and  watch  the  sunset
-
-Epoch 13, Batch 999, Loss 2.762967586517334, Accuracy 15.9513
-Time taken for 1 epoch : 710.9862396717072 secs
+Epoch 7, Batch 999, Loss 3.1828935146331787, Accuracy 16.1915
+Time taken for 1 epoch : 436.7583944797516 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/484896012_7787d04f41.jpg'],
-r_cap:  <start>  a  small  boy  wearing  red  kicks  a  soccer  ball  above  the  grass  <end>
-fake:  a  boy  in  a  red  shirt  is  playing  with  a  soccer  ball  a  boy  in  a  blue  and  white  soccer  uniform  is  chasing  a  ball
+img_name:[b'./Dataset/Flicker8k_Dataset/3455898176_f0e003ce58.jpg'],
+r_cap:  <start>  brown  dog  jumping  over  a  hurdle  <end>
+fake:  a  dog  jumps  over  a  hurdle
 
-Epoch 14, Batch 999, Loss 2.7489089965820312, Accuracy 15.9544
-Time taken for 1 epoch : 709.181155204773 secs
+Epoch 8, Batch 999, Loss 3.061796188354492, Accuracy 16.1729
+Time taken for 1 epoch : 456.22467589378357 secs
 
 
-img_name:[b'./Dataset/Flicker8k_Dataset/544576742_283b65fa0d.jpg'],
-r_cap:  <start>  woman  goes  rock  climbing  <end>
-fake:  a  man  in  a  red  shirt  is  climbing  up  a  rock
+img_name:[b'./Dataset/Flicker8k_Dataset/2353119813_685bace18e.jpg'],
+r_cap:  <start>  a  dog  jumps  for  a  yellow  and  black  ball  <end>
+fake:  a  dog  is  chasing  a  ball
+
+Epoch 9, Batch 999, Loss 2.8293192386627197, Accuracy 16.1471
+Time taken for 1 epoch : 438.5945243835449 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3034585889_388d6ffcc0.jpg'],
+r_cap:  <start>  bike  rider  is  looking  at  a  accident  of  other  sports  bike  rider  <end>
+fake:  a  man  on  a  motorcycle  is  riding  on  a  dirt  track
+
+Epoch 10, Batch 999, Loss 3.060682773590088, Accuracy 16.1416
+Time taken for 1 epoch : 431.8918604850769 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3486135177_772628d034.jpg'],
+r_cap:  <start>  a  snowboarder  is  doing  a  handstand  with  his  board  in  the  air  on  a  slope  <end>
+fake:  a  snowboarder  is  jumping  over  a  ramp
+
+Epoch 11, Batch 999, Loss 2.85579514503479, Accuracy 16.1604
+Time taken for 1 epoch : 417.20214676856995 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2331510788_986809bbb4.jpg'],
+r_cap:  <start>  a  grey  dog  with  a  <unk>  tail  digs  in  snow  <end>
+fake:  a  dog  is  running  through  the  snow
+
+Epoch 12, Batch 999, Loss 2.868558645248413, Accuracy 16.1373
+Time taken for 1 epoch : 414.0717992782593 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2985439112_8a3b77d5c9.jpg'],
+r_cap:  <start>  one  <unk>  jumps  over  another  <unk>  who  is  doing  a  back  flip  from  a  wall  <end>
+fake:  a  man  is  performing  a  trick  on  a  skateboard  in  front  of  a  crowd
+
+Epoch 13, Batch 999, Loss 2.654689311981201, Accuracy 16.1233
+Time taken for 1 epoch : 408.43085050582886 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/213216174_0632af65a2.jpg'],
+r_cap:  <start>  a  kid  playing  in  a  swimming  pool  <end>
+fake:  a  boy  in  a  pool
+
+Epoch 14, Batch 999, Loss 2.4868526458740234, Accuracy 16.1259
+Time taken for 1 epoch : 405.2049050331116 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/1167669558_87a8a467d6.jpg'],
+r_cap:  <start>  the  man  in  the  yellow  t  shirt  is  pulling  a  large  grin  on  his  face  <end>
+fake:  a  man  with  a  mohawk  and  beard
+
+Epoch 15, Batch 999, Loss 2.3693857192993164, Accuracy 16.1092
+Time taken for 1 epoch : 403.2516129016876 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/700884207_d3ec546494.jpg'],
+r_cap:  <start>  a  baby  is  dressed  up  in  pink  gear  and  staring  while  an  adult  holds  her  steady  <end>
+fake:  a  woman  in  a  blue  shirt  is  sitting  on  a  red  couch  a  woman  in  a  black  shirt  is  sitting  in  a  chair  that  has  a  baby  in  a  white  shirt
+
+Epoch 16, Batch 999, Loss 2.2859041690826416, Accuracy 16.1309
+Time taken for 1 epoch : 395.36655378341675 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/590445887_4d4fa43923.jpg'],
+r_cap:  <start>  a  woman  with  green  hair  hula  hoops  before  a  crowd  <end>
+fake:  a  girl  in  a  green  shirt  is  doing  a  handstand  in  front  of  a  crowd
+
+Epoch 17, Batch 999, Loss 2.21378231048584, Accuracy 16.1472
+Time taken for 1 epoch : 391.9233112335205 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3404906655_bc51c69c1e.jpg'],
+r_cap:  <start>  a  man  in  a  blue  jacket  riding  a  dog  sled  over  a  snow  covered  plain  <end>
+fake:  a  sled  team  of  dogs  pulling  a  sled  through  the  snow
+
+Epoch 18, Batch 999, Loss 2.313603401184082, Accuracy 16.1532
+Time taken for 1 epoch : 385.62950825691223 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2312731013_1a3a8e25c6.jpg'],
+r_cap:  <start>  a  man  and  his  husky  sitting  in  the  snow  at  the  corner  of  a  building  <end>
+fake:  a  man  in  a  blue  jacket  sitting  on  a  bench
+
+Epoch 19, Batch 999, Loss 2.3827269077301025, Accuracy 16.1647
+Time taken for 1 epoch : 387.0963432788849 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/247618600_239eeac405.jpg'],
+r_cap:  <start>  a  girl  has  placed  a  purple  cloth  over  her  face  while  she  lies  on  wooden  structure  <end>
+fake:  a  woman  in  a  blue  shirt  sits  on  a  wooden  bench
+
+Epoch 20, Batch 999, Loss 1.9398739337921143, Accuracy 16.1682
+Time taken for 1 epoch : 378.87377166748047 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2949497756_be8e58e6bd.jpg'],
+r_cap:  <start>  three  brown  dogs  on  the  patchy  grass  <end>
+fake:  two  brown  dogs  are  playing  together
+
+Epoch 21, Batch 999, Loss 2.010988712310791, Accuracy 16.1635
+Time taken for 1 epoch : 375.4017267227173 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2956413620_d59de03a06.jpg'],
+r_cap:  <start>  a  man  wearing  a  helmet  driving  a  black  race  car  down  the  street  <end>
+fake:  a  black  car  is  parked  next  to  a  wooden  monument  that  has  flames  on  the  ground
+
+Epoch 22, Batch 999, Loss 1.9613869190216064, Accuracy 16.2209
+Time taken for 1 epoch : 371.23379778862 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2726262796_03bd63a155.jpg'],
+r_cap:  <start>  a  young  girl  wearing  a  blue  bathing  suit  plays  in  the  waves  at  the  beach  <end>
+fake:  a  girl  in  a  blue  swimsuit  walks  into  the  ocean
+
+Epoch 23, Batch 999, Loss 2.020923614501953, Accuracy 16.2435
+Time taken for 1 epoch : 374.59884428977966 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2312731013_1a3a8e25c6.jpg'],
+r_cap:  <start>  a  man  and  his  husky  sitting  in  the  snow  at  the  corner  of  a  building  <end>
+fake:  a  man  in  a  blue  jacket  sitting  on  a  bench  a  man  sits  on  the  bench  next  to  his  dog
+
+Epoch 24, Batch 999, Loss 1.7364219427108765, Accuracy 16.2768
+Time taken for 1 epoch : 371.9003927707672 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3404552106_f516df0f5b.jpg'],
+r_cap:  <start>  there  are  five  women  in  pink  and  purple  and  one  has  a  child  on  her  shoulders  <end>
+fake:  a  group  of  women  in  pink  dresses  holding  red  flowers
+
+Epoch 25, Batch 999, Loss 1.6128329038619995, Accuracy 16.3081
+Time taken for 1 epoch : 380.2558636665344 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/700884207_d3ec546494.jpg'],
+r_cap:  <start>  a  baby  is  dressed  up  in  pink  gear  and  staring  while  an  adult  holds  her  steady  <end>
+fake:  a  woman  in  a  blue  shirt  is  sitting  on  a  red  couch  a  woman  in  a  black  shirt  is  sitting  in  a  chair  that  has  a  baby  in  a  white  shirt  a  woman  with  a  black  and  white  hat  sits  next  to  a  man  with  a  black  cap  on  a  chair
+
+Epoch 26, Batch 999, Loss 1.7707990407943726, Accuracy 16.3207
+Time taken for 1 epoch : 403.6491060256958 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/185972340_781d60ccfd.jpg'],
+r_cap:  <start>  a  vehicle  climbs  on  rocks  near  a  forest  <end>
+fake:  a  man  drives  a  jeep  over  rough  rocks
+
+Epoch 27, Batch 999, Loss 1.733552098274231, Accuracy 16.3345
+Time taken for 1 epoch : 380.7678179740906 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3325910784_5ecb88310c.jpg'],
+r_cap:  <start>  a  white  and  brown  dog  wearing  a  bandanna  jumps  through  the  air  <end>
+fake:  a  white  dog  is  jumping  over  a  log
+
+Epoch 28, Batch 999, Loss 1.9321452379226685, Accuracy 16.3584
+Time taken for 1 epoch : 379.83181071281433 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3510218982_318f738b76.jpg'],
+r_cap:  <start>  an  older  man  in  boxing  gloves  trains  <end>
+fake:  a  man  is  juggling  <unk>  with  a  bowling  alley
+
+Epoch 29, Batch 999, Loss 1.6436569690704346, Accuracy 16.3624
+Time taken for 1 epoch : 377.3506135940552 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3353036763_4cbeba03b2.jpg'],
+r_cap:  <start>  two  men  riding  three  horses  wave  their  arms  in  the  air  <end>
+fake:  two  cowboys  on  horseback  another  man  and  a  woman  standing  beside  them
+
+Epoch 30, Batch 999, Loss 1.6264498233795166, Accuracy 16.3508
+Time taken for 1 epoch : 380.32268834114075 secs
+
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3164347907_2813f8ff0b.jpg'],
+r_cap:  <start>  two  people  taking  pictures  over  snow  covered  ground  <end>
+fake:  a  man  and  woman  are  <unk>  on  the  ice  at  a  ski  rink
+
+img_name:[b'./Dataset/Flicker8k_Dataset/2461616306_3ee7ac1b4b.jpg'],
+fake:  straining  straining  straining  straining  straining  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic  frolic,
+r_cap:  <start>  the  young  boy  is  jumping  into  the  pool  on  his  belly  <end>
+
+img_name:[b'./Dataset/Flicker8k_Dataset/3006926228_cf3c067b3e.jpg'],
+fake:  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  tubing  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks  barks,
+r_cap:  <start>  the  man  and  one  of  the  women  have  their  hands  raised  <end>
 
