@@ -80,7 +80,7 @@ def evaluate(image, names, cap_real, tokenize, transformer, show=True):
     f_cap = " ".join([f" {i}" for i in l[0]])
     print(f'\nReal caption: {r_cap}')
     print(f'Gen  caption: {f_cap}')
-    print('\n\n')
+    # print('\n\n')
 
     if show:
         plt.figure()

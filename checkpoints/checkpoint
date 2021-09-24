@@ -1,2 +1,4 @@
-model_checkpoint_path: "transformer_prev_0"
-all_model_checkpoint_paths: "transformer_prev_0"
+model_checkpoint_path: "ckpt-32"
+all_model_checkpoint_paths: "ckpt-32"
+all_model_checkpoint_timestamps: 1632443185.3585489
+last_preserved_timestamp: 1632418861.2959304

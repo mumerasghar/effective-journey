@@ -169,7 +169,7 @@ img_name_train, img_name_val, cap_train, cap_val = train_test_split(
     img_name_vector, cap_vector, test_size=0.2, random_state=0
 )
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 BUFFER_SIZE = 256
 num_steps = len(img_name_train)
 
@@ -211,7 +211,7 @@ i_data = i_data.map(
     ),
     num_parallel_calls=tf.data.experimental.AUTOTUNE,
 )
-i_data = i_data.shuffle(BUFFER_SIZE).batch(64)
+i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
 i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
 
@@ -321,8 +321,8 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential(
         [
-            SpectralNormalization(tf.keras.layers.Dense(dff, activation="relu")),
-            SpectralNormalization(tf.keras.layers.Dense(d_model)),
+            tf.keras.layers.Dense(dff, activation="relu"),
+            tf.keras.layers.Dense(d_model),
         ]
     )
 
@@ -433,7 +433,7 @@ class ConvBlock(tf.keras.layers.Layer):
 
 
 class PreAttention(tf.keras.layers.Layer):
-    def __init__(self, s, rate=0.1):
+    def __init__(self, s,keep_dim=False, rate=0.1):
         super().__init__()
 
         self.block1 = ConvBlock(s)
@@ -444,7 +444,14 @@ class PreAttention(tf.keras.layers.Layer):
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
 
-        self.conv1x1 = SpectralNormalization(
+        self.beta = tf.Variable(tf.zeros(1))
+
+        if keep_dim:
+            self.conv1x1 = SpectralNormalization(
+                tf.keras.layers.Conv2D(s, 1, use_bias=False)
+            )
+        else:
+            self.conv1x1 = SpectralNormalization(
             tf.keras.layers.Conv2D(s // 2, 1, use_bias=False)
         )
 
@@ -452,7 +459,7 @@ class PreAttention(tf.keras.layers.Layer):
 
         attn_out = self.block1(x)
         attn_out = self.dropout1(attn_out, training=training)
-        out1 = self.layernorm1(attn_out + x)
+        out1 = self.layernorm1(self.beta*attn_out + x)
 
         out1 = self.conv1x1(out1)
         out1 = self.dropout2(out1, training=training)
@@ -466,10 +473,10 @@ class SelfAttention(tf.keras.layers.Layer):
     def __init__(self, s, rate=0.1, training=True):
         super().__init__()
 
-        self.p_attention1 = PreAttention(s)
-        self.p_attention2 = PreAttention(s // 2)
-        self.p_attention3 = PreAttention(s // 2)
-        self.p_attention4 = PreAttention(s // 2)
+        self.p_attention1 = PreAttention(s) # 2048 ---> 1024
+        self.p_attention2 = PreAttention(s // 2) # 1024 ---> 512
+        self.p_attention3 = PreAttention(s // 4,keep_dim=True)
+        self.p_attention4 = PreAttention(s // 4,keep_dim=True)
 
     def call(self, x):
         x = tf.reshape(x, (-1, 8, 8, 2048))
@@ -515,12 +522,13 @@ class Encoder(tf.keras.layers.Layer):
         # x = inp
         seq_len = tf.shape(x)[1]
         x = self.embedding(x)
-        # x += self.pos_encoding[:, :seq_len, :]
-        # x = self.dropout(x, training=training)
 
-        # for i in range(self.num_layers):
-        #     q = self.embedding(inp[:, i, :, :])
-        #     x = self.enc_layers[i](x, x, q, training, mask)
+        # x += self.pos_encoding[:, :seq_len, :]
+        x = self.dropout(x, training=training)
+
+        for i in range(self.num_layers):
+            q = self.embedding(inp[:, i, :, :])
+            x = self.enc_layers[i](x, x, q, training, mask)
 
         return x
 
@@ -582,9 +590,11 @@ class Transformer(tf.keras.Model):
         rate=0.1,
     ):
         super().__init__()
-        self.encoder = Encoder(
-            num_layers, d_model, num_heads, dff, row_size, col_size, rate
-        )
+        # self.encoder = Encoder(
+        #     num_layers, d_model, num_heads, dff, row_size, col_size, rate
+        # )
+
+        self.encoder = SelfAttention(2048)
         self.decoder = Decoder(
             num_layers,
             d_model,
@@ -605,7 +615,7 @@ class Transformer(tf.keras.Model):
         dec_padding_mask=None,
         enc_padding_mask=None,
     ):
-        enc_output = self.encoder(inp, training, enc_padding_mask)
+        enc_output = self.encoder(inp)
         dec_output, attention_weights = self.decoder(
             tar, enc_output, training, look_ahead_mask, dec_padding_mask
         )
@@ -792,12 +802,7 @@ def generate_caption():
         return name, f_cap, r_cap
 
 
-print("Going for train")
-
-
-def main(epochs, o_break=False):
-    print("going for training")
-
+def checkpoint():
     checkpoint_dir = "checkpoints"
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(
@@ -812,7 +817,14 @@ def main(epochs, o_break=False):
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)
         print("Latest checkpoint restored!!")
+    
+    return ckpt_manager
 
+
+def main(epochs, o_break=False):
+
+    ckpt_manager = checkpoint()
+    print('passed checkpoint')
     for epoch in range(epochs):
 
         start = time.time()
@@ -827,36 +839,38 @@ def main(epochs, o_break=False):
                     f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
                 )
             if o_break:
-                break
+                return
 
         if o_break:
-            break
+            return
 
+        info = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}\n"
         with open("result.txt", "a") as f:
             name, f_cap, r_cap = generate_caption()
-            f.write(
-                f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}\n"
-            )
-            f.write(f"Time taken for 1 epoch : {time.time() - start} secs\n\n\n")
-            f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n\n")
 
-        print(
-            f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
-        )
+            f.write(info)
+            f.write(f"Time taken for 1 epoch : {time.time() - start} secs\n")
+            f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n")
+            f.write("-"*100+'\n\n')
+
+        print(info)
         print(f"Time taken for 1 epoch : {time.time() - start} secs\n\n\n")
-
+        
         ckpt_save_path = ckpt_manager.save()
-    transformer.save_weights(f"checkpoints/transformer_final_weights_{epoch}")
+
 
 
 if __name__ == "__main__":
-    # main(30)
-    main(30, False)
+    print("going for training")
+    main(30)
 
 else:
+    print('going for testing')
+    checkpoint()
 
-    main(1, True)
-    print("loading transformer weights")
-    transformer.load_weights("checkpoints/transformer_final_weights")
-    # while True:
-    #     generate_caption()
+    while True:
+        for img_tensor, cap, img_name, image in i_data.take(1):
+            f_cap, r_cap, name = evaluate(
+                img_tensor, img_name, cap, tokenizer, transformer, show=False
+            )
+            print(name)
