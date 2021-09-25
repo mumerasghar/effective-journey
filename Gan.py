@@ -138,11 +138,11 @@ def load_image(image_path):
 # new_input = image_model.input
 # hidden_layer = image_model.layers[-1].output
 # image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
-
+#
 # encode_train = sorted(set(img_name_vector))
 # image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
 # image_dataset = image_dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(64)
-
+#
 # for idx, (img, path) in enumerate(image_dataset):
 #     batch_features = image_features_extract_model(img)
 #     batch_features = tf.reshape(batch_features,
@@ -211,7 +211,7 @@ i_data = i_data.map(
     ),
     num_parallel_calls=tf.data.experimental.AUTOTUNE,
 )
-i_data = i_data.shuffle(BUFFER_SIZE).batch(64)
+i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
 i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
 
@@ -320,7 +320,10 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential(
-        [tf.keras.layers.Dense(dff, activation="relu"), tf.keras.layers.Dense(d_model)]
+        [
+            tf.keras.layers.Dense(dff, activation="relu"),
+            tf.keras.layers.Dense(d_model),
+        ]
     )
 
 
@@ -430,49 +433,66 @@ class ConvBlock(tf.keras.layers.Layer):
 
 
 class PreAttention(tf.keras.layers.Layer):
-    def __init__(self, s, rate=0.1):
+    def __init__(self, s, keep_dims=False, rate=0.1):
         super().__init__()
 
         self.block1 = ConvBlock(s)
-        self.conv1x1_1 = SpectralNormalization(
-            tf.keras.layers.Conv2D(s // 2, 1, use_bias=False)
-        )
-        self.dropout1 = tf.keras.layers.Dropout(rate)
-        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
 
-        self.block2 = ConvBlock(s/2)
-        self.conv1x1_2 = SpectralNormalization(
-            tf.keras.layers.Conv2D(s // 4, 1, use_bias=False)
-        )
+        self.dropout1 = tf.keras.layers.Dropout(rate)
         self.dropout2 = tf.keras.layers.Dropout(rate)
+
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+
+        self.gamma = tf.Variable(tf.zeros(1), trainable=True)
+
+        if not keep_dims:
+            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s // 2, 1, use_bias=False))
+        else:
+            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s, 1, use_bias=False))
+
+    def call(self, x, training=True):
+        attn_out = self.block1(x)
+        attn_out = self.dropout1(attn_out, training=training)
+        out1 = self.layernorm1(self.gamma * attn_out + x)
+
+        out1 = self.conv1x1(out1)
+        out1 = self.dropout2(out1, training=training)
+        out1 = tf.keras.activations.relu(out1)
+        out1 = self.layernorm2(out1)
+
+        return out1
+
+
+class SelfAttention(tf.keras.layers.Layer):
+    def __init__(self, s, rate=0.1, training=True):
+        super().__init__()
+
+        self.p_attention1 = PreAttention(s)
+        self.p_attention2 = PreAttention(s // 2)
+        self.p_attention3 = PreAttention(s // 4, keep_dims=True)
+        self.p_attention4 = PreAttention(s // 4, keep_dims=True)
 
     def call(self, x):
         x = tf.reshape(x, (-1, 8, 8, 2048))
-        activation = tf.keras.activations.relu
 
-        _x = self.block1(x)
-        x = _x + x
-        x = self.layernorm1(activation(self.dropout1(self.conv1x1_1(x))))
-
-        _x = self.block2(x)
-        x = _x + x
-        x = self.layernorm2(activation(self.dropout2(self.conv1x1_2(x))))
+        x = self.p_attention1(x)
+        x = self.p_attention2(x)
+        x = self.p_attention3(x)
+        x = self.p_attention4(x)
 
         x = tf.reshape(x, shape=(-1, 64, 512))
         return x
 
 
 class Encoder(tf.keras.layers.Layer):
-    def __init__(
-        self, num_layers, d_model, num_heads, dff, row_size, col_size, rate=0.1
-    ):
+    def __init__(self, num_layers, d_model, num_heads, dff, rate=0.1):
         super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
 
-        # self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
-        self.embedding = PreAttention(2048)
+        self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
+        # self.embedding = SelfAttention(2048)
         # self.pos_encoding = positional_encoding_2d(row_size, col_size, self.d_model)
 
         self.enc_layers = [
@@ -491,31 +511,22 @@ class Encoder(tf.keras.layers.Layer):
 
     #     return x
     def call(self, inp, training, mask=None):
-        x = inp[:, 0, :, :]
-        # x = inp
+        # x = inp[:, 0, :, :]
+        x = inp
         seq_len = tf.shape(x)[1]
         x = self.embedding(x)
         # x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
 
         for i in range(self.num_layers):
-            q = self.embedding(inp[:, i, :, :])
-            x = self.enc_layers[i](x, x, q, training, mask)
+            # q = self.embedding(inp[:, i, :, :])
+            x = self.enc_layers[i](x, x, x, training, mask)
 
         return x
 
 
 class Decoder(tf.keras.layers.Layer):
-    def __init__(
-        self,
-        num_layers,
-        d_model,
-        num_heads,
-        dff,
-        target_vocab_size,
-        maximum_position_encoding,
-        rate=0.1,
-    ):
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, maximum_position_encoding, rate=0.1, ):
         super().__init__()
 
         self.d_model = d_model
@@ -549,46 +560,18 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    def __init__(
-        self,
-        num_layers,
-        d_model,
-        num_heads,
-        dff,
-        row_size,
-        col_size,
-        target_vocab_size,
-        max_pos_encoding,
-        rate=0.1,
-    ):
+    def __init__(self, num_layers, d_model, num_heads, dff, row_size, col_size, target_vocab_size, max_pos_encoding,
+                 rate=0.1):
         super().__init__()
-        self.encoder = Encoder(
-            num_layers, d_model, num_heads, dff, row_size, col_size, rate
-        )
-        self.decoder = Decoder(
-            num_layers,
-            d_model,
-            num_heads,
-            dff,
-            target_vocab_size,
-            max_pos_encoding,
-            rate,
-        )
+        # self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
+        self.encoder = SelfAttention(2048)
+        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate, )
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-    def call(
-        self,
-        inp,
-        tar,
-        training,
-        look_ahead_mask=None,
-        dec_padding_mask=None,
-        enc_padding_mask=None,
-    ):
-        enc_output = self.encoder(inp, training, enc_padding_mask)
-        dec_output, attention_weights = self.decoder(
-            tar, enc_output, training, look_ahead_mask, dec_padding_mask
-        )
+    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None, ):
+        # enc_output = self.encoder(inp, training, enc_padding_mask)
+        enc_output = self.encoder(inp)
+        dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
         return final_output, attention_weights
 
@@ -686,17 +669,8 @@ class Critic(tf.keras.Model):
 train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
-transformer = Transformer(
-    num_layer,
-    d_model,
-    num_heads,
-    dff,
-    row_size,
-    col_size,
-    target_vocab_size,
-    max_pos_encoding=target_vocab_size,
-    rate=dropout_rate,
-)
+transformer = Transformer(num_layer, d_model, num_heads, dff, row_size, col_size, target_vocab_size,
+                          max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
 critic = Critic()
 
@@ -741,7 +715,7 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     return loss + g_loss
 
 
-@tf.function
+# @tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -766,10 +740,9 @@ def train_step(img_tensor, tar):
 
 def generate_caption():
     for img_tensor, cap, img_name, image in i_data.take(1):
-        f_cap, r_cap, name = evaluate(
-            img_tensor, img_name, cap, tokenizer, transformer, show=False
-        )
-        return name, f_cap, r_cap
+        f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
+        # f_cap, r_cap, name = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
+        return names, f_cap, r_cap
 
 
 print("Going for train")
@@ -806,31 +779,30 @@ def main(epochs, o_break=False):
                 print(
                     f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
                 )
+            break
             if o_break:
-                break
+                return
 
         if o_break:
-                break
+            return
+
+        log_time = f"Time taken for 1 epoch : {time.time() - start} secs"
+        log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 
         with open("result.txt", "a") as f:
             name, f_cap, r_cap = generate_caption()
-            f.write(
-                f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}\n"
-            )
-            f.write(f"Time taken for 1 epoch : {time.time() - start} secs\n\n\n")
+            f.write(f"{log_accuracy}\n")
+            f.write(f"{log_time}\n\n\n")
             f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n\n")
 
-        print(
-            f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
-        )
-        print(f"Time taken for 1 epoch : {time.time() - start} secs\n\n\n")
-
         ckpt_save_path = ckpt_manager.save()
-    transformer.save_weights(f"checkpoints/transformer_final_weights_{epoch}")
+
+        print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
+        print(f'{log_accuracy}')
+        print(f'{log_time}\n')
 
 
 if __name__ == "__main__":
-    # main(30)
     main(30, False)
 
 else:
@@ -838,5 +810,3 @@ else:
     main(1, True)
     print("loading transformer weights")
     transformer.load_weights("checkpoints/transformer_final_weights")
-    # while True:
-    #     generate_caption()

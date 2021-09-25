@@ -2,7 +2,6 @@ import os
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-import matplotlib
 from matplotlib import pyplot as plt
 
 # matplotlib.use("TkAgg")

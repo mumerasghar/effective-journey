@@ -1,11 +1,6 @@
 import numpy as np
 import tensorflow as tf
-# from Generator_t2I import TextToImage
-import yaml
-
-
-# with open("./config/config.yml", "r") as ymlfile:
-#     cfg = yaml.load(ymlfile)
+from tensorflow_addons.layers import SpectralNormalization
 
 
 def get_angles(pos, i, d_model):
@@ -56,10 +51,17 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
         self.depth = d_model // self.num_heads
 
-        self.wq = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
-        self.wk = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
-        self.wv = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
-        self.dense = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
+        self.wq = SpectralNormalization(
+            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
+
+        self.wk = SpectralNormalization(
+            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
+
+        self.wv = SpectralNormalization(
+            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
+
+        self.dense = SpectralNormalization(
+            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
 
     def split_heads(self, x, batch_size):
         x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
@@ -86,8 +88,10 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential([
-        tf.keras.layers.Dense(dff, activation='relu', kernel_initializer='glorot_uniform'),
-        tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
+        SpectralNormalization(
+            tf.keras.layers.Dense(dff, activation='relu', kernel_initializer='glorot_uniform')),
+        SpectralNormalization(
+            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
     ])
 
 
@@ -157,9 +161,10 @@ class Encoder(tf.keras.layers.Layer):
         self.d_model = d_model
         self.num_layers = num_layers
 
-        self.embedding = tf.keras.layers.Dense(self.d_model,
-                                               activation='relu',
-                                               kernel_initializer='glorot_uniform')
+        self.embedding = SpectralNormalization(
+            tf.keras.layers.Dense(self.d_model,
+                                  activation='relu',
+                                  kernel_initializer='glorot_uniform'))
 
         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(rate)
@@ -185,7 +190,7 @@ class Decoder(tf.keras.layers.Layer):
         self.pos_embedding = positional_encoding(maximum_position_encoding, d_model)
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
-        self.dropout = tf.keras.layers.Dropout(rate)
+        self.dropout = SpectralNormalization(tf.keras.layers.Dropout(rate))
 
     def call(self, x, enc_output, training, look_ahead_mask=None, padding_mask=None):
         seq_len = tf.shape(x)[1]
@@ -211,35 +216,13 @@ class Transformer(tf.keras.Model):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
         self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
-        self.final_layer = tf.keras.layers.Dense(target_vocab_size, kernel_initializer='glorot_uniform')
+        self.final_layer = SpectralNormalization(
+            tf.keras.layers.Dense(target_vocab_size, kernel_initializer='glorot_uniform'))
 
     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
+
         enc_output = self.encoder(inp, training, enc_padding_mask)
         dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
+
         return final_output, attention_weights
-
-
-NUM_LAYERS = 4
-D_MODEL = 512
-DFF = 2048
-NUM_HEADS = 8
-BATCH_SIZE = 64
-CRITIC_ITERATIONS = 2
-LAMBDA = 10
-TARGET_VOCAB_SIZE = 5000 + 1
-DROPOUT_RATE = 0.1
-ROW_SIZE = 8
-COL_SIZE = 8
-
-#
-# class Network(tf.keras.Model):
-#     def __init__(self):
-#         super(Network, self).__init__()
-#         self.image_to_text = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
-#                                          max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
-#         self.text_to_image = TextToImage()
-#
-#     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
-#         p, w = self.image_to_text(inp, tar, False, dec_padding_mask)
-#         print('this is final warning')

@@ -8,7 +8,7 @@ import numpy as np
 
 warnings.filterwarnings("ignore")
 
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 BUFFER_SIZE = 100
 
 

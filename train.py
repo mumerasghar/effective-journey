@@ -42,38 +42,40 @@ def create_masks_decoder(tar):
     return combined_mask
 
 
-def i2T_dis_loss(f_cap, r_cap):
+def dis_loss(f_cap, r_cap):
     b_shape = f_cap.shape[0]
+    f_label = tf.zeros([b_shape, 1, 1])
+    r_label = tf.ones([b_shape, 1, 1])
 
-    r_cap = tf.reshape(r_cap, shape=(b_shape, 1, -1))
-    r_output = i2T_critic(r_cap, True)
-
-    r_d_loss = loss_mse(tf.ones_like(r_output), r_output)
+    r_output = critic(r_cap, True)
+    # r_output = tf.reshape(r_output, shape=(b_shape))
+    r_d_loss = loss_mse(r_label, r_output)
     r_d_loss = tf.reduce_sum(r_d_loss)
 
-    f_cap = tf.reshape(f_cap, shape=(b_shape, 1, -1))
-    f_output = i2T_critic(f_cap, True)
-
-    f_d_loss = loss_mse(tf.zeros_like(f_output), f_output)
+    f_output = critic(f_cap, True)
+    # f_output = tf.reshape(f_output, shape=(b_shape))
+    f_d_loss = loss_mse(f_label, f_output)
     f_d_loss = tf.reduce_sum(f_d_loss)
 
     return r_d_loss + f_d_loss
 
 
-def i2T_gen_loss(tar_real, predictions, f_cap, r_cap):
-    loss = i2T_loss_function(tar_real, predictions)
-    g_loss = 0
-    # b_shape = f_cap.shape[0]
-    # r_cap = tf.reshape(r_cap, shape=(b_shape, 1, -1))
-    # g_output = i2T_critic(r_cap, True)
-    #
-    # g_loss = loss_mse(tf.ones_like(g_output), g_output)
-    # g_loss = tf.reduce_sum(g_loss)
+def gen_loss(tar_real, predictions, f_cap, r_cap):
+    loss = loss_function(tar_real, predictions)
+
+    b_shape = f_cap.shape[0]
+    f_label = tf.zeros([b_shape, 1, 1])
+    r_label = tf.ones([b_shape, 1, 1])
+
+    g_output = critic(r_cap, True)
+    # g_output = tf.reshape(g_output, shape=(b_shape))
+    g_loss = loss_mse(r_label, g_output)
+    g_loss = tf.reduce_sum(g_loss)
 
     return loss + g_loss
 
 
-def i2T_loss_function(real, pred):
+def loss_function(real, pred):
     mask = tf.math.logical_not(tf.math.equal(real, 0))
     loss_ = loss_object(real, pred)
 
@@ -84,34 +86,24 @@ def i2T_loss_function(real, pred):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-@tf.function
+# @tf.function
 def train_step(img_tensor, tar, img_name, img):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
     dec_mask = create_masks_decoder(tar_inp)
-    # tf.GradientTape() as d_tape,
-    # tf.GradientTape() as gen_tape,
-    # tf.GradientTape() as disc_tape,
-    # tf.GradientTape() as rnn,
-    # tf.GradientTape() as d_tape,
-    # tf.GradientTape() as gen_tape,
-    # tf.GradientTape() as disc_tape,
-    # tf.GradientTape() as rnn
 
-    with tf.GradientTape() as tape:
-        # predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
-        predictions, _ = i2T_generator(img_tensor, tar_inp, True, dec_mask)
+    with tf.GradientTape() as tape, tf.GradientTape() as d_tape:
+        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
 
-        loss = i2T_gen_loss(tar_real, predictions, f_cap, tar_real)
-        # d_loss = i2T_dis_loss(f_cap, tar_real)
+        loss = gen_loss(tar_real, predictions, f_cap, tar_real)
+        gradients = tape.gradient(loss, transformer.trainable_variables)
+        optimizer_g.apply_gradients(zip(gradients, transformer.trainable_variables))
 
-    # d_gradients = d_tape.gradient(d_loss, i2T_critic.trainable_variables)
-    gradients = tape.gradient(loss, i2T_generator.trainable_variables)
-
-    # i2T_c_optimizer.apply_gradients(zip(d_gradients, i2T_critic.trainable_variables))
-    i2T_g_optimizer.apply_gradients(zip(gradients, i2T_generator.trainable_variables))
+        d_loss = dis_loss(f_cap, tar_real)
+        d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
+        optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
 
     train_loss(loss)
     train_accuracy(tar_real, predictions)
@@ -119,18 +111,18 @@ def train_step(img_tensor, tar, img_name, img):
 
 def generate_caption():
     for img_tensor, cap, img_name, image in i_dataset.take(1):
-        evaluate(img_tensor, img_name, cap, tokenizer, i2T_generator, show=False)
-        break
+        f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
+        return names, f_cap, r_cap
 
 
-def train(dataset, epochs, t_break=False):
+def checkpoint():
     checkpoint_dir = 'checkpoints'
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(
-        i2T_generator_optimizer=i2T_g_optimizer,
-        i2T_discriminator_optimizer=i2T_c_optimizer,
-        i2T_generator=i2T_generator,
-        i2T_discriminator=i2T_critic)
+        i2T_generator_optimizer=optimizer_g,
+        i2T_discriminator_optimizer=optimizer_c,
+        i2T_generator=transformer,
+        i2T_discriminator=critic)
 
     ckpt_manager = tf.train.CheckpointManager(
         checkpoint, checkpoint_dir, max_to_keep=1)
@@ -138,7 +130,14 @@ def train(dataset, epochs, t_break=False):
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)
         print('Latest checkpoint restored!!')
+
+    return ckpt_manager
+
+
+def train(dataset, epochs, t_break=False):
     for epoch in range(epochs):
+
+        ckpt_manager = checkpoint()
 
         start = time.time()
         train_loss.reset_states()
@@ -150,37 +149,45 @@ def train(dataset, epochs, t_break=False):
             if batch % 50 == 0:
                 print(
                     f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
-
             if t_break:
-                break
+                return
 
-        if t_break:
-            break
-        generate_caption()
+        log_time = f"Time taken for 1 epoch : {time.time() - start} secs"
+        log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
+
+        with open("result.txt", "a") as f:
+            name, f_cap, r_cap = generate_caption()
+            f.write(f"\n{log_time}\n")
+            f.write(f"{log_accuracy}\n")
+            f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n\n")
+            f.write("-- " * 100 + "\n")
+
+        print(f'{log_accuracy}')
+        print(f'{log_time}\n')
+
+        # ### saving checkpoint
         ckpt_save_path = ckpt_manager.save()
         print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
-
-        print(f'Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}')
-        print(f'Time taken for 1 epoch : {time.time() - start} secs\n')
 
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################
 
 learning_rate = CustomSchedule(D_MODEL)
-i2T_generator = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
-                            max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
-i2T_critic = Critic(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF)
+transformer = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
+                          max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
+critic = Critic(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF)
 
-i2T_g_optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+optimizer_g = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 loss_mse = tf.keras.losses.BinaryCrossentropy(from_logits=True)
-i2T_c_optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+optimizer_c = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name='train_accuracy')
+
 dataset, i_dataset = create_dataset()
 
 if __name__ == '__main__':
     train(dataset, 30)
 else:
-    train(i_dataset, 1, True)
+    checkpoint()
