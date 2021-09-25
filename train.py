@@ -134,6 +134,9 @@ def checkpoint():
     return ckpt_manager
 
 
+print('Going for training')
+
+
 def train(dataset, epochs, t_break=False):
     for epoch in range(epochs):
 

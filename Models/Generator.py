@@ -190,7 +190,7 @@ class Decoder(tf.keras.layers.Layer):
         self.pos_embedding = positional_encoding(maximum_position_encoding, d_model)
 
         self.dec_layers = [DecoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
-        self.dropout = SpectralNormalization(tf.keras.layers.Dropout(rate))
+        self.dropout = tf.keras.layers.Dropout(rate)
 
     def call(self, x, enc_output, training, look_ahead_mask=None, padding_mask=None):
         seq_len = tf.shape(x)[1]
