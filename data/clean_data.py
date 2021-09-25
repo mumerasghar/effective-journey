@@ -126,5 +126,3 @@ else:
 
         pickle.dump(all_img_name_vector, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-
-
