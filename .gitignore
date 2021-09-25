@@ -1,6 +1,6 @@
 __pycache__/*
 Dataset/*
 Dataset
-checkpoints/
+checkpoints/*
 venv
 .idea
