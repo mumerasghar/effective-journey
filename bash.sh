@@ -2,6 +2,7 @@
 git clone https://github.com/oaeka/effective-journey.git
 cd effective-journey/
 git checkout local
+rm Dataset
 mkdir Dataset
 cd Dataset
 
