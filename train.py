@@ -86,7 +86,7 @@ def loss_function(real, pred):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-@tf.function
+# @tf.function
 def train_step(img_tensor, tar, img_name, img):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -155,6 +155,8 @@ def train(dataset, epochs, t_break=False):
             if t_break:
                 return
 
+
+            break
         log_time = f"Time taken for 1 epoch : {time.time() - start} secs"
         log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 

@@ -1,0 +1,8 @@
+
+Time taken for 1 epoch : 7.683241605758667 secs
+Epoch 1, Batch 0, Loss 50.373008728027344, Accuracy 20.2542
+img_name:[b'./Dataset/Flicker8k_Dataset/3477681171_b1bb8b211d.jpg'],
+r_cap:  <start>  a  girl  in  a  pink  shirt  is  <unk>  her  limbs  out  in  midair  <end>
+fake:  chairs  chairs  sheets  sheets  sheets  sheets  sheets  chairs  sheets  chairs  sheets  chairs  chairs  sheets  sheets  sheets  sheets  sheets  atvs  garb  garb  garb  garb  garb  garb  garb  sheets  chairs  chairs  sheets  sheets  garb  garb  garb  garb  garb  atvs  fireworks  garb  garb
+
+-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 

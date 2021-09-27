@@ -3,15 +3,13 @@ from tensorflow_addons.layers import SpectralNormalization
 from .Generator import Encoder, MultiHeadedAttention
 
 
-def critic_feed_forward(d_model, output):
-    return tf.keras.Sequential([
-        SpectralNormalization(tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')),
-        tf.keras.layers.LeakyReLU(alpha=0.2),
-        tf.keras.layers.Dense(output, kernel_initializer='glorot_uniform')
-    ])
+# def critic_feed_forward(d_model, output):
+#     return tf.keras.Sequential([
+#         SpectralNormalization(tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')),
+#         tf.keras.layers.LeakyReLU(alpha=0.2),
+#         tf.keras.layers.Dense(output, kernel_initializer='glorot_uniform')
+#     ])
 
-
-# class CriticEnc()
 
 # class Critic(tf.keras.Model):
 #
@@ -24,6 +22,15 @@ def critic_feed_forward(d_model, output):
 #         x = tf.reshape(x, shape=(x.shape[0], 1, x.shape[1]))
 #         x = self.enc(x, training)
 #         return self.ffn(x)
+
+def critic_feed_forward(d_model, dff):
+    return tf.keras.Sequential(
+        [
+            SpectralNormalization(tf.keras.layers.Dense(dff)),
+            tf.keras.layers.LeakyReLU(alpha=0.1),
+            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
+        ]
+    )
 
 
 class Critic(tf.keras.Model):

@@ -81,10 +81,8 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
 def point_wise_feed_forward_network(d_model, dff):
     return tf.keras.Sequential([
-        SpectralNormalization(
-            tf.keras.layers.Dense(dff, activation='relu', kernel_initializer='glorot_uniform')),
-        SpectralNormalization(
-            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
+        tf.keras.layers.Dense(dff, activation='relu', kernel_initializer='glorot_uniform'),
+        tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
     ])
 
 
@@ -209,8 +207,7 @@ class Transformer(tf.keras.Model):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
         self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
-        self.final_layer = SpectralNormalization(
-            tf.keras.layers.Dense(target_vocab_size, kernel_initializer='glorot_uniform'))
+        self.final_layer = tf.keras.layers.Dense(target_vocab_size, kernel_initializer='glorot_uniform')
 
     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
         enc_output = self.encoder(inp, training, enc_padding_mask)
