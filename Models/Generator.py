@@ -51,17 +51,10 @@ class MultiHeadedAttention(tf.keras.layers.Layer):
 
         self.depth = d_model // self.num_heads
 
-        self.wq = SpectralNormalization(
-            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
-
-        self.wk = SpectralNormalization(
-            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
-
-        self.wv = SpectralNormalization(
-            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
-
-        self.dense = SpectralNormalization(
-            tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform'))
+        self.wq = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
+        self.wk = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
+        self.wv = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
+        self.dense = tf.keras.layers.Dense(d_model, kernel_initializer='glorot_uniform')
 
     def split_heads(self, x, batch_size):
         x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
@@ -220,7 +213,6 @@ class Transformer(tf.keras.Model):
             tf.keras.layers.Dense(target_vocab_size, kernel_initializer='glorot_uniform'))
 
     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
-
         enc_output = self.encoder(inp, training, enc_padding_mask)
         dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
