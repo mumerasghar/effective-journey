@@ -138,9 +138,8 @@ print('Going for training')
 
 
 def train(dataset, epochs, t_break=False):
+    ckpt_manager = checkpoint()
     for epoch in range(epochs):
-
-        ckpt_manager = checkpoint()
 
         start = time.time()
         train_loss.reset_states()
@@ -165,7 +164,7 @@ def train(dataset, epochs, t_break=False):
             f.write(f"\n{log_time}\n")
             f.write(f"{log_accuracy}\n")
             f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n\n")
-            f.write("-- " * 100 + "\n")
+            f.write("-" * 100 + "\n")
 
         print(f'{log_accuracy}')
         print(f'{log_time}\n')
