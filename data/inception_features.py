@@ -1,8 +1,16 @@
+import os
 import numpy as np
 import tensorflow as tf
 
-from clean_data import all_img_name_vector
+# from clean_data import all_img_name_vector
 
+
+FILE_PATH = "./Dataset/COCO/extracted/val2014/"
+BATCH_SIZE = 128
+
+_files = os.listdir(FILE_PATH)
+all_img_name_vector = [i for i in _files if not i.endswith('.npy')]
+all_img_name_vector = [FILE_PATH+i for i in all_img_name_vector]
 
 def load_image(image_path):
     print(image_path)
@@ -21,7 +29,7 @@ image_features_extract_model = tf.keras.Model(new_input, hidden_layer)
 
 encode_train = sorted(set(all_img_name_vector))
 image_dataset = tf.data.Dataset.from_tensor_slices(encode_train)
-image_dataset = image_dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(64)
+image_dataset = image_dataset.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(BATCH_SIZE)
 
 for idx, (img, path) in enumerate(image_dataset):
     batch_features = image_features_extract_model(img)

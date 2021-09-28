@@ -15,8 +15,8 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-image_path = "./Dataset/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/Flickr8k.token.txt"
+image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
+dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
 
 jpgs = os.listdir(image_path)
 print(f"Total image in dataset is {len(jpgs)}")
@@ -169,7 +169,7 @@ img_name_train, img_name_val, cap_train, cap_val = train_test_split(
     img_name_vector, cap_vector, test_size=0.2, random_state=0
 )
 
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 BUFFER_SIZE = 256
 num_steps = len(img_name_train)
 
@@ -752,12 +752,7 @@ def generate_caption():
         return names, f_cap, r_cap
 
 
-print("Going for train")
-
-
-def main(epochs, o_break=False):
-    print("going for training")
-
+def checkpoint_manager():
     checkpoint_dir = "checkpoints"
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(
@@ -772,6 +767,13 @@ def main(epochs, o_break=False):
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)
         print("Latest checkpoint restored!!")
+
+    return ckpt_manager
+
+def main(epochs, o_break=False):
+
+    print("going for training")
+    ckpt_manager = checkpoint_manager()
 
     for epoch in range(epochs):
 
@@ -814,6 +816,6 @@ if __name__ == "__main__":
     main(30, False)
 
 else:
-    main(1, True)
-    print("loading transformer weights")
-    transformer.load_weights("checkpoints/transformer_final_weights")
+    from inference import karpathy_inference
+    checkpoint_manager()
+    karpathy_inference(tokenizer,transformer)

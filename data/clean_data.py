@@ -16,8 +16,8 @@ num_layer = 4
 top_k = 5000
 target_vocab_size = top_k + 1
 
-image_path = './Dataset/Flicker8k_Dataset/'
-dir_Flickr_text = './Dataset/Flickr8k.token.txt'
+image_path = './Dataset/Flicker/Flicker8k_Dataset/'
+dir_Flickr_text = './Dataset/Flicker/Flickr8k.token.txt'
 
 data: pd.DataFrame
 
@@ -94,7 +94,7 @@ def do_preprocess():
 
 
 all_captions = []
-cap_file = './Dataset/captions.pickle'
+cap_file = './Dataset/Flicker/captions.pickle'
 
 # check if all_captions is already available
 if os.path.isfile(cap_file):
@@ -108,11 +108,11 @@ else:
             caption = '<start> ' + caption + ' <end>'
             all_captions.append(caption)
 
-        pickle.dump(all_captions, f, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(all_captions, f, protocol=pickle.HIGHEST_PROTOCOL) 
 
 # check if all_img_name_vector is already available
 all_img_name_vector = []
-img_name = './Dataset/img_name.pickle'
+img_name = './Dataset/Flicker/img_name.pickle'
 
 if os.path.isfile(img_name):
     print('found cached img_name.pickle')
