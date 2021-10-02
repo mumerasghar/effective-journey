@@ -1,12 +1,10 @@
 from Models import *
-from data.create_dataset import create_dataset, tokenizer
+from data.create_dataset import create_dataset
 from inference import evaluate
 
 import os
+import yaml
 import time
-import warnings
-
-warnings.filterwarnings("ignore")
 
 DFF = 2048
 NUM_HEADS = 8
@@ -81,12 +79,10 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     return loss + g_loss
 
 
-
-
 # ###################################### TRAINING FUNCTIONS #########################################
 
-@tf.function
-def train_step(img_tensor, tar, img_name, img):
+# @tf.function
+def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
@@ -108,7 +104,7 @@ def train_step(img_tensor, tar, img_name, img):
     train_accuracy(tar_real, predictions)
 
 
-def generate_caption():
+def generate_caption(tokenizer):
     for img_tensor, cap, img_name, image in i_dataset.take(1):
         f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
         return names, f_cap, r_cap
@@ -136,7 +132,7 @@ def checkpoint():
 print('Going for training')
 
 
-def train(dataset, epochs, t_break=False):
+def train(dataset, epochs, tokenizer, t_break=False):
     ckpt_manager = checkpoint()
     for epoch in range(epochs):
 
@@ -144,8 +140,8 @@ def train(dataset, epochs, t_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar, img_name, img)) in enumerate(dataset):
-            train_step(img_tensor, tar, img_name, img)
+        for (batch, (img_tensor, tar, img_name)) in enumerate(dataset):
+            train_step(img_tensor, tar)
 
             if batch % 50 == 0:
                 print(
@@ -157,7 +153,7 @@ def train(dataset, epochs, t_break=False):
         log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 
         with open("result.txt", "a") as f:
-            name, f_cap, r_cap = generate_caption()
+            name, f_cap, r_cap = generate_caption(tokenizer)
             f.write(f"{log_accuracy}\n")
             f.write(f"{log_time}\n\n")
             f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n")
@@ -171,6 +167,11 @@ def train(dataset, epochs, t_break=False):
 
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################
+
+DATASET = 'COCO'
+with open('./cfg/cfg.yaml', 'r') as f:
+    cfg = yaml.load(f)
+    cfg = cfg[DATASET]
 
 learning_rate = CustomSchedule(D_MODEL)
 transformer = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
@@ -186,9 +187,9 @@ optimizer_c = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, e
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name='train_accuracy')
 
-dataset, i_dataset = create_dataset()
+dataset, i_dataset, tokenizer = create_dataset(cfg)
 
 if __name__ == '__main__':
-    train(dataset, 30)
+    train(dataset, 30, tokenizer)
 else:
     checkpoint()

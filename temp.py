@@ -1,37 +1,24 @@
-from inference import evaluate
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from tensorflow_addons.layers import SpectralNormalization
-from tensorflow.keras.layers import Conv2D
-import tensorflow as tf
-
-import os
-import string
-import time
-import warnings
-
-import numpy as np
-import pandas as pd
-
-import os
-import time
 import json
+import os
 import pickle
-import warnings
+import time
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+from tensorflow_addons.layers import SpectralNormalization
+
+from inference import evaluate
 
 DIR = './Dataset/COCO/extracted/coco_training/'
 CAP_FILE = './Dataset/COCO/captions.pickle'
 IMG_NAME = './Dataset/COCO/img_name.pickle'
 CAPTIONS = './Dataset/COCO/annotations/captions_train2014.json'
 
-def copy_sub_data(a):
 
+def copy_sub_data(a):
     _dest = './Dataset/COCO/extracted/coco_training/'
     _src = './Dataset/COCO/extracted/train2014/'
     import shutil
@@ -39,8 +26,8 @@ def copy_sub_data(a):
     _atem = set(a)
     for i in _atem:
         _img = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(i)))])}{i}"
-        shutil.copy(f'{_src}{_img}.jpg',_dest)    
-        shutil.copy(f'{_src}{_img}.jpg.npy',_dest)   
+        shutil.copy(f'{_src}{_img}.jpg', _dest)
+        shutil.copy(f'{_src}{_img}.jpg.npy', _dest)
 
 
 def read_data():
@@ -55,15 +42,13 @@ def read_data():
 
     data = pd.DataFrame(data, columns=['filename', 'captions'])
 
-    a = data['filename'].values
-
     all_captions = []
     if os.path.isfile(CAP_FILE):
         print("found cached caption.pickle")
         with open(CAP_FILE, 'rb') as f:
             all_captions = pickle.load(f)
     else:
-        print('formating captions')
+        print('formatting captions')
         with open(CAP_FILE, 'wb') as f:
             for caption in data['captions'].astype(str):
                 caption = '<start> ' + caption + ' <end>'
@@ -94,6 +79,7 @@ def data_limiter(num, captions, img_name_vector):
     i_name_vec = img_name_vector[:num]
     t_cap, i_name_vec = shuffle(t_cap, i_name_vec, random_state=1)
     return t_cap, i_name_vec
+
 
 print('delimiting data')
 train_captions, img_name_vector = data_limiter(40000, ALL_CAPTIONS, ALL_IMG_NAME)
@@ -522,6 +508,8 @@ col_size = 8
 num_layer = 4
 dropout_rate = 0.1
 target_vocab_size = 5000 + 1
+
+
 # target_vocab_size = top_k + 1
 
 
@@ -600,7 +588,7 @@ class Critic(tf.keras.Model):
         # out2 = self.norm2(att2 + x)
 
         ffn_output = self.ffn(out2)
-        ffn_output = self.dropout3(ffn_output,training=training)
+        ffn_output = self.dropout3(ffn_output, training=training)
         return ffn_output
 
 
@@ -748,6 +736,7 @@ if __name__ == "__main__":
 else:
     pass
     from inference import karpathy_inference
+
     #
     checkpoint_manager()
     karpathy_inference(tokenizer, transformer)
