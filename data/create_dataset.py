@@ -6,18 +6,11 @@ import tensorflow as tf
 import numpy as np
 
 
-def data_limiter(num, total_captions, all_img_name_vector):
-    train_captions, img_name_vector = shuffle(total_captions, all_img_name_vector, random_state=1)
-    train_captions = train_captions[:num]
-    img_name_vector = img_name_vector[:num]
-    return train_captions, img_name_vector
-
-
-def load_pre_image(image_path):
-    img = tf.io.read_file(image_path)
-    img = tf.image.decode_jpeg(img, channels=3)
-    img = tf.image.resize(img, (64, 64))
-    return img
+def data_limiter(num, captions, img_name_vector):
+    t_cap = captions[:num]
+    i_name_vec = img_name_vector[:num]
+    t_cap, i_name_vec = shuffle(t_cap, i_name_vec, random_state=1)
+    return t_cap, i_name_vec
 
 
 def tokenize(all_captions, all_img_name_vector):
