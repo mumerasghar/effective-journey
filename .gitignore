@@ -6,3 +6,5 @@ venv
 .idea
 COCO/*
 weights/*
+pre_trained_weights/*
+tuple.dump

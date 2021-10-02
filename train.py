@@ -8,18 +8,18 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-NUM_LAYERS = 4
-D_MODEL = 512
 DFF = 2048
-NUM_HEADS = 8
-BATCH_SIZE = 64
-CRITIC_ITERATIONS = 2
 LAMBDA = 10
-TARGET_VOCAB_SIZE = 5000 + 1
-DROPOUT_RATE = 0.1
 ROW_SIZE = 8
 COL_SIZE = 8
+NUM_HEADS = 8
+D_MODEL = 512
+NUM_LAYERS = 4
+BATCH_SIZE = 64
+DROPOUT_RATE = 0.1
+CRITIC_ITERATIONS = 2
 LATENT_DIMENSION = 100
+TARGET_VOCAB_SIZE = 5000 + 1
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -86,7 +86,7 @@ def loss_function(real, pred):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar, img_name, img):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -154,24 +154,21 @@ def train(dataset, epochs, t_break=False):
             if t_break:
                 return
 
-
-            break
         log_time = f"Time taken for 1 epoch : {time.time() - start} secs"
         log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 
         with open("result.txt", "a") as f:
             name, f_cap, r_cap = generate_caption()
-            f.write(f"\n{log_time}\n")
             f.write(f"{log_accuracy}\n")
-            f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n\n")
+            f.write(f"{log_time}\n\n")
+            f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n")
             f.write("-" * 100 + "\n")
 
+        ckpt_save_path = ckpt_manager.save()
+
+        print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
         print(f'{log_accuracy}')
         print(f'{log_time}\n')
-
-        # ### saving checkpoint
-        ckpt_save_path = ckpt_manager.save()
-        print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
 
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################

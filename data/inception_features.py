@@ -5,12 +5,13 @@ import tensorflow as tf
 # from clean_data import all_img_name_vector
 
 
-FILE_PATH = "./Dataset/COCO/extracted/val2014/"
+FILE_PATH = "./Dataset/COCO/extracted/train2014/"
 BATCH_SIZE = 128
 
 _files = os.listdir(FILE_PATH)
 all_img_name_vector = [i for i in _files if not i.endswith('.npy')]
-all_img_name_vector = [FILE_PATH+i for i in all_img_name_vector]
+all_img_name_vector = [FILE_PATH + i for i in all_img_name_vector]
+
 
 def load_image(image_path):
     print(image_path)

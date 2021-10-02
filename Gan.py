@@ -1,10 +1,3 @@
-from inference import evaluate
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-from tensorflow_addons.layers import SpectralNormalization
-from tensorflow.keras.layers import Conv2D
-import tensorflow as tf
-
 import os
 import string
 import time
@@ -12,6 +5,12 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
+from tensorflow_addons.layers import SpectralNormalization
+
+from inference import evaluate
 
 warnings.filterwarnings("ignore")
 
@@ -38,7 +37,6 @@ data = pd.DataFrame(datatxt, columns=["filename", "index", "captions"])
 data = data.reindex(columns=["index", "filename", "captions"])
 data = data[data.filename != "2258277193_586949ec62.jpg.1"]
 uni_filenames = np.unique(data.filename.values)
-data.head()
 
 npic = 5
 npix = 224
@@ -499,35 +497,35 @@ class Encoder(tf.keras.layers.Layer):
             EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
         ]
 
-        self.s_attention = []
-        for _ in range(num_layers):
-            if _ == 0:
-                self.s_attention.append(SelfAttention(dff, convert_dim=True))
-            else:
-                self.s_attention.append(SelfAttention(dff))
-
+        # self.s_attention = []
+        # for _ in range(num_layers):
+        #     if _ == 0:
+        #         self.s_attention.append(SelfAttention(dff, convert_dim=True))
+        #     else:
+        #         self.s_attention.append(SelfAttention(dff))
+        #
         self.dropout = tf.keras.layers.Dropout(rate)
-        # skeptical of being using relu here.
-        self.conv_net = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(d_model, (3, 3), padding='same', activation='relu')
-        ])
+        # # skeptical of being using relu here.
+        # self.conv_net = tf.keras.Sequential([
+        #     tf.keras.layers.Conv2D(d_model, (3, 3), padding='same', activation='relu')
+        # ])
 
     def call(self, x, training, mask=None):
-
         inp = x
         x = self.embedding(x)
         x = self.dropout(x, training=training)
 
         for i in range(self.num_layers):
-            if i == 0:
-                _atn_module = self.s_attention[i](inp)
-            else:
-                _atn_module = self.s_attention[i](x)
-            _enc_out = self.enc_layers[i](x, training, mask)
-            _x = tf.concat([_atn_module, _enc_out], axis=-1)
-            _x = tf.reshape(_x, (-1, 8, 8, 1024))
-            _x = self.conv_net(_x)
-            x = tf.reshape(_x, (-1, 64, 512))
+            # if i == 0:
+            #     _atn_module = self.s_attention[i](inp)
+            # else:
+            #     _atn_module = self.s_attention[i](x)
+            # _enc_out = self.enc_layers[i](x, training, mask)
+            # _x = tf.concat([_atn_module, _enc_out], axis=-1)
+            # _x = tf.reshape(_x, (-1, 8, 8, 1024))
+            # _x = self.conv_net(_x)
+            # x = tf.reshape(_x, (-1, 64, 512))
+            x = self.enc_layers[i](x, training, mask)
 
         return x
 
@@ -722,7 +720,7 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     return loss + g_loss
 
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -770,8 +768,8 @@ def checkpoint_manager():
 
     return ckpt_manager
 
-def main(epochs, o_break=False):
 
+def main(epochs, o_break=False):
     print("going for training")
     ckpt_manager = checkpoint_manager()
 
@@ -817,5 +815,6 @@ if __name__ == "__main__":
 
 else:
     from inference import karpathy_inference
+
     checkpoint_manager()
-    karpathy_inference(tokenizer,transformer)
+    karpathy_inference(tokenizer, transformer)
