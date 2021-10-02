@@ -43,7 +43,7 @@ def map_func(img_name, cap):
     return img_tensor, cap, img_name
 
 
-def create_data_tensor(img_name, cap_name, batch_siz=64, shuffle=128):
+def create_data_tensor(img_name, cap_name, batch_siz=64):
     dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name))
     dataset = dataset.map(
         lambda item1, item2: tf.numpy_function(
@@ -51,7 +51,7 @@ def create_data_tensor(img_name, cap_name, batch_siz=64, shuffle=128):
         ),
         num_parallel_calls=tf.data.experimental.AUTOTUNE,
     )
-    dataset = dataset.shuffle(shuffle).batch(batch_siz)
+    dataset = dataset.shuffle(128).batch(batch_siz)
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
     return dataset
@@ -71,7 +71,7 @@ def create_dataset(cfg):
     # tokenize above data.
     tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector)
     # converting data into train and test set tensors.
-    dataset = create_data_tensor(img_name_train, cap_train, batch_siz=64)
+    dataset = create_data_tensor(img_name_train, cap_train, batch_siz=cfg['BATCH_SIZE'])
     i_data = create_data_tensor(img_name_val, cap_val, batch_siz=1)
 
     return dataset, i_data, tokenizer
