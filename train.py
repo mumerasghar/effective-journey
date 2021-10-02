@@ -81,7 +81,7 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -105,7 +105,7 @@ def train_step(img_tensor, tar):
 
 
 def generate_caption(tokenizer):
-    for img_tensor, cap, img_name, image in i_dataset.take(1):
+    for img_tensor, cap, img_name in i_dataset.take(1):
         f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
         return names, f_cap, r_cap
 
