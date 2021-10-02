@@ -1485,3 +1485,220 @@ img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000161218.j
 r_cap:  <start>  a  picture  of  the  inside  of  a  kitchen  <end>
 fake:  a  kitchen  with  white  cabinets  and  a  small  window
 ----------------------------------------------------------------------------------------------------
+Epoch 1, Batch 999, Loss 4.578742980957031, Accuracy 17.6473
+Time taken for 1 epoch : 195.52668023109436 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000015851.jpg'],
+r_cap:  <start>  this  young  man  is  cutting  across  the  yard  with  his  bicycle  <end>
+fake:  a  man  riding  a  bike  on  a  bike
+----------------------------------------------------------------------------------------------------
+Epoch 2, Batch 999, Loss 4.160137176513672, Accuracy 17.3990
+Time taken for 1 epoch : 158.47969460487366 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000203887.jpg'],
+r_cap:  <start>  a  bathroom  sink  blue  tiles  on  the  wall  and  multi  blue  colored  tiles  on  the  floor  <end>
+fake:  a  bathroom  with  a  sink  and  a  mirror
+----------------------------------------------------------------------------------------------------
+Epoch 3, Batch 999, Loss 3.979246139526367, Accuracy 17.3560
+Time taken for 1 epoch : 151.1364197731018 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000082359.jpg'],
+r_cap:  <start>  two  people  are  in  a  room  with  pots  and  pans  <end>
+fake:  a  man  standing  in  a  kitchen  with  a  stove  and  a  stove
+----------------------------------------------------------------------------------------------------
+Epoch 4, Batch 999, Loss 3.930007219314575, Accuracy 17.3177
+Time taken for 1 epoch : 148.97975707054138 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000500323.jpg'],
+r_cap:  <start>  a  line  of  bikers  sit  on  their  motorcycles  <end>
+fake:  a  man  riding  a  motorcycle  down  a  street
+----------------------------------------------------------------------------------------------------
+Epoch 5, Batch 999, Loss 3.6304585933685303, Accuracy 17.2993
+Time taken for 1 epoch : 151.25119161605835 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000279804.jpg'],
+r_cap:  <start>  a  motorcycle  with  cheetah  print  parked  on  a  curb  <end>
+fake:  a  motorcycle  is  parked  in  front  of  a  building
+----------------------------------------------------------------------------------------------------
+Epoch 6, Batch 999, Loss 3.8101680278778076, Accuracy 17.2844
+Time taken for 1 epoch : 154.10887360572815 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000421996.jpg'],
+r_cap:  <start>  an  old  fashioned  stove  top  oven  with  pots  and  pans  on  top  of  it  <end>
+fake:  a  stove  top  oven  sitting  next  to  a  stove  top  oven
+----------------------------------------------------------------------------------------------------
+Epoch 7, Batch 999, Loss 3.935568332672119, Accuracy 17.2460
+Time taken for 1 epoch : 154.5939965248108 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000371134.jpg'],
+r_cap:  <start>  one  plane  taking  off  and  another  ready  to  land  <end>
+fake:  a  large  passenger  jet  flying  through  a  blue  sky
+----------------------------------------------------------------------------------------------------
+Epoch 8, Batch 999, Loss 4.227756977081299, Accuracy 17.2331
+Time taken for 1 epoch : 151.46635746955872 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000129133.jpg'],
+r_cap:  <start>  this  is  people  gathered  around  a  bike  on  the  grass  <end>
+fake:  a  group  of  people  standing  around  a  bike
+----------------------------------------------------------------------------------------------------
+Epoch 9, Batch 999, Loss 3.707467794418335, Accuracy 17.1891
+Time taken for 1 epoch : 152.15262746810913 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000532842.jpg'],
+r_cap:  <start>  a  stone  church  with  a  double  decker  bus  out  front  <end>
+fake:  a  street  scene  with  a  car  and  a  bus
+----------------------------------------------------------------------------------------------------
+Epoch 10, Batch 999, Loss 3.5773158073425293, Accuracy 17.1751
+Time taken for 1 epoch : 151.9011573791504 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000015851.jpg'],
+r_cap:  <start>  this  young  man  is  cutting  across  the  yard  with  his  bicycle  <end>
+fake:  a  man  riding  a  bike  on  a  bike  a  woman  is  riding  a  bicycle  with  a  basket  in  the  background
+----------------------------------------------------------------------------------------------------
+Epoch 11, Batch 999, Loss 3.6136133670806885, Accuracy 17.1660
+Time taken for 1 epoch : 157.87157344818115 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000358484.jpg'],
+r_cap:  <start>  a  very  fancy  looking  rest  room  with  some  pretty  sinks  <end>
+fake:  a  bathroom  sink  with  a  bowl  and  a  vase  of  flowers
+----------------------------------------------------------------------------------------------------
+Epoch 12, Batch 999, Loss 3.1038050651550293, Accuracy 17.1758
+Time taken for 1 epoch : 158.64760565757751 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000123456.jpg'],
+r_cap:  <start>  a  fake  squid  is  riding  a  bike  carrying  a  fake  <unk>  <end>
+fake:  a  man  riding  a  bike  with  a  dog  in  the  basket
+----------------------------------------------------------------------------------------------------
+Epoch 13, Batch 999, Loss 2.818856954574585, Accuracy 17.1416
+Time taken for 1 epoch : 155.02868485450745 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000440049.jpg'],
+r_cap:  <start>  a  room  has  yellow  curtains  a  sink  and  shelving  <end>
+fake:  a  bathroom  with  a  toilet  and  a  window
+----------------------------------------------------------------------------------------------------
+Epoch 14, Batch 999, Loss 2.522299289703369, Accuracy 17.1405
+Time taken for 1 epoch : 159.46467638015747 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000205114.jpg'],
+r_cap:  <start>  a  large  airplane  flies  over  an  area  with  power  lines  and  cars  and  people  <end>
+fake:  a  plane  flying  low  over  a  city  with  several  planes
+----------------------------------------------------------------------------------------------------
+Epoch 15, Batch 999, Loss 2.705153703689575, Accuracy 17.1944
+Time taken for 1 epoch : 152.9329652786255 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000506183.jpg'],
+r_cap:  <start>  a  fighter  jet  plane  on  an  airport  runway  <end>
+fake:  a  small  airplane  parked  in  an  airport  hanger  with  a  lot  of  people  standing  around  it
+----------------------------------------------------------------------------------------------------
+Epoch 16, Batch 999, Loss 2.7822675704956055, Accuracy 17.2012
+Time taken for 1 epoch : 151.45303058624268 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000157020.jpg'],
+r_cap:  <start>  a  police  officer  walking  two  bikes  next  to  a  <unk>  <end>
+fake:  a  man  with  a  hat  and  a  shirt  on  a  bicycle
+----------------------------------------------------------------------------------------------------
+Epoch 17, Batch 999, Loss 2.3469579219818115, Accuracy 17.2560
+Time taken for 1 epoch : 153.58957052230835 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000294892.jpg'],
+r_cap:  <start>  a  bus  that  is  driving  down  the  road  <end>
+fake:  a  person  riding  a  bike  down  a  street
+----------------------------------------------------------------------------------------------------
+Epoch 18, Batch 999, Loss 3.029299259185791, Accuracy 17.2698
+Time taken for 1 epoch : 152.97917771339417 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000399956.jpg'],
+r_cap:  <start>  an  adorable  little  gir  sitting  on  a  park  bench  <end>
+fake:  a  woman  sitting  on  a  bench  writing  on  green  field
+----------------------------------------------------------------------------------------------------
+Epoch 19, Batch 999, Loss 2.1727726459503174, Accuracy 17.3279
+Time taken for 1 epoch : 153.49321937561035 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000135920.jpg'],
+r_cap:  <start>  a  bathroom  with  a  fancy  vanity  against  the  wall  <end>
+fake:  a  bathroom  with  a  sink  and  a  toilet
+----------------------------------------------------------------------------------------------------
+Epoch 20, Batch 999, Loss 2.0615627765655518, Accuracy 17.3564
+Time taken for 1 epoch : 153.21965217590332 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000139416.jpg'],
+r_cap:  <start>  this  is  an  image  of  a  cat  eating  food  with  a  funny  face  <end>
+fake:  a  cat  eating  food  from  a  bowl  of  food
+----------------------------------------------------------------------------------------------------
+Epoch 21, Batch 999, Loss 3.4386823177337646, Accuracy 17.4206
+Time taken for 1 epoch : 160.81859064102173 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000202279.jpg'],
+r_cap:  <start>  various  ingredients  sit  on  a  kitchen  table  top  as  if  being  prepared  to  be  cooked  <end>
+fake:  a  stove  with  pots  and  pans  on  it  and  a  pot  on  the  stove
+----------------------------------------------------------------------------------------------------
+Epoch 22, Batch 999, Loss 1.9184644222259521, Accuracy 17.4500
+Time taken for 1 epoch : 155.14966869354248 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000123539.jpg'],
+r_cap:  <start>  an  old  black  and  white  photo  of  a  man  working  in  a  commercial  kitchen  <end>
+fake:  a  man  in  a  chef's  outfit  cooking  over  a  stove  top
+----------------------------------------------------------------------------------------------------
+Epoch 23, Batch 999, Loss 2.4848740100860596, Accuracy 17.4358
+Time taken for 1 epoch : 153.11701011657715 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000126910.jpg'],
+r_cap:  <start>  a  woman  is  smiling  while  holding  a  large  hamburger  <end>
+fake:  a  woman  sitting  in  front  of  a  birthday  cake
+----------------------------------------------------------------------------------------------------
+Epoch 24, Batch 999, Loss 2.0866010189056396, Accuracy 17.5154
+Time taken for 1 epoch : 154.88998436927795 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000324916.jpg'],
+r_cap:  <start>  a  distorted  looking  picture  of  a  bathroom  with  multicolored  tiling  <end>
+fake:  a  bathroom  with  three  urinals  and  a  brick  wall
+----------------------------------------------------------------------------------------------------
+Epoch 25, Batch 999, Loss 1.7788033485412598, Accuracy 17.5297
+Time taken for 1 epoch : 154.20072555541992 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000092153.jpg'],
+r_cap:  <start>  a  blue  and  white  commercial  air  liner  on  the  tarmac  <end>
+fake:  a  large  airplane  sits  on  the  tarmac  during  the  day
+----------------------------------------------------------------------------------------------------
+Epoch 26, Batch 999, Loss 1.8919731378555298, Accuracy 17.5026
+Time taken for 1 epoch : 153.26931595802307 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000229084.jpg'],
+r_cap:  <start>  a  woman  and  child  pushing  buttons  on  a  white  microwave  <end>
+fake:  a  woman  stirring  a  pot  of  food  on  the  stove
+----------------------------------------------------------------------------------------------------
+Epoch 27, Batch 999, Loss 2.2822787761688232, Accuracy 17.5602
+Time taken for 1 epoch : 154.15530633926392 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000561865.jpg'],
+r_cap:  <start>  this  is  a  man  working  inside  a  kitchen  <end>
+fake:  the  view  of  a  restaurant  kitchen  with  workers  preparing  food
+----------------------------------------------------------------------------------------------------
+Epoch 28, Batch 999, Loss 1.6444120407104492, Accuracy 17.6366
+Time taken for 1 epoch : 156.29243898391724 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000016383.jpg'],
+r_cap:  <start>  a  kitchen  that  has  a  small  island  in  the  middle  of  it  <end>
+fake:  a  kitchen  with  a  fridge  covered  in  photos  and  four  bottles  on  the  counter
+----------------------------------------------------------------------------------------------------
+Epoch 29, Batch 999, Loss 1.7726271152496338, Accuracy 17.6927
+Time taken for 1 epoch : 155.44698238372803 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000408445.jpg'],
+r_cap:  <start>  a  messy  kitchen  counter  with  broken  <unk>  of  glass  <end>
+fake:  a  messy  kitchen  counter  with  dirty  and  dirty  dishes
+----------------------------------------------------------------------------------------------------
+Epoch 30, Batch 999, Loss 1.3565397262573242, Accuracy 17.6821
+Time taken for 1 epoch : 151.5922613143921 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000547363.jpg'],
+r_cap:  <start>  a  device  flying  thru  the  air  with  a  sky  background  <end>
+fake:  a  plane  flying  high  in  a  blue  sky
+----------------------------------------------------------------------------------------------------
+Epoch 1, Batch 499, Loss 5.413140296936035, Accuracy 16.7809
+Time taken for 1 epoch : 185.2207486629486 secs
+
+img_name:[b'./Dataset/Flicker/Flicker8k_Dataset/2945036454_280fa5b29f.jpg'],
+r_cap:  <start>  the  yellow  dog  is  trying  to  catch  a  red  frisbee  <end>
+fake:  a  dog  is  running  through  a  field
+----------------------------------------------------------------------------------------------------

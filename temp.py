@@ -284,32 +284,6 @@ def point_wise_feed_forward_network(d_model, dff):
     )
 
 
-# class EncoderLayer(tf.keras.layers.Layer):
-
-#     def __init__(self, d_model, num_heads, dff, rate=0.1):
-#         super().__init__()
-#         self.mha = MultiHeadedAttention(d_model, num_heads)
-#         self.ffn = point_wise_feed_forward_network(d_model, dff)
-
-#         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-#         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-
-#         self.dropout1 = tf.keras.layers.Dropout(rate)
-#         self.dropout2 = tf.keras.layers.Dropout(rate)
-
-#     def call(self, x, training, mask=None):
-#         attn_output, _ = self.mha(x, x, x, mask)
-#         attn_output = self.dropout1(attn_output, training=training)
-
-#         out1 = self.layernorm1(x + attn_output)
-
-#         ffn_output = self.ffn(out1)
-#         ffn_output = self.dropout2(ffn_output, training=training)
-#         out2 = self.layernorm2(out1 + ffn_output)
-
-#         return out2
-
-
 class EncoderLayer(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
         super().__init__()
@@ -626,8 +600,8 @@ class Critic(tf.keras.Model):
         # out2 = self.norm2(att2 + x)
 
         ffn_output = self.ffn(out2)
+        ffn_output = self.dropout3(ffn_output,training=training)
         return ffn_output
-        # ffn_output = self.dropout3(training=training)
 
 
 train_loss = tf.keras.metrics.Mean(name="train_loss")
@@ -769,7 +743,7 @@ def main(epochs, o_break=False):
 
 
 if __name__ == "__main__":
-    main(60, False)
+    main(30, False)
 
 else:
     pass

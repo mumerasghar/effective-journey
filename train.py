@@ -9,9 +9,6 @@ import warnings
 warnings.filterwarnings("ignore")
 
 DFF = 2048
-LAMBDA = 10
-ROW_SIZE = 8
-COL_SIZE = 8
 NUM_HEADS = 8
 D_MODEL = 512
 NUM_LAYERS = 4
@@ -42,6 +39,15 @@ def create_masks_decoder(tar):
     return combined_mask
 
 
+def loss_function(real, pred):
+    mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_ = loss_object(real, pred)
+
+    mask = tf.cast(mask, dtype=loss_.dtype)
+    loss_ *= mask
+    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
+
+
 def dis_loss(f_cap, r_cap):
     b_shape = f_cap.shape[0]
     f_label = tf.zeros([b_shape, 1, 1])
@@ -69,19 +75,12 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
 
     g_output = critic(r_cap, True)
     # g_output = tf.reshape(g_output, shape=(b_shape))
-    g_loss = loss_mse(r_label, g_output)
+    g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
     return loss + g_loss
 
 
-def loss_function(real, pred):
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    loss_ = loss_object(real, pred)
-
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 
 # ###################################### TRAINING FUNCTIONS #########################################
