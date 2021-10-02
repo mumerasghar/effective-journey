@@ -8,6 +8,7 @@ import numpy as np
 
 def data_limiter(num, captions, img_name_vector):
     t_cap = captions[:num]
+
     i_name_vec = img_name_vector[:num]
     t_cap, i_name_vec = shuffle(t_cap, i_name_vec, random_state=1)
     return t_cap, i_name_vec
