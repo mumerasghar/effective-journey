@@ -165,7 +165,7 @@ def train(dataset, epochs, tokenizer, t_break=False):
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################
 
-DATASET = 'COCO'
+DATASET = 'FLICKER'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]

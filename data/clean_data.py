@@ -15,7 +15,7 @@ class Flicker8K:
     def pre_process(self):
 
         jpgs = os.listdir(self.img_pth)
-        print(f'\t[+]Total image in dataset is {len(jpgs)}.')
+        print(f'  [+] Total image in dataset is {len(jpgs)}.')
 
         with open(self.txt_pth, 'r') as file:
             text = file.read()
@@ -30,7 +30,7 @@ class Flicker8K:
         for txt in df.captions.values:
             vocabulary.extend(txt.split())
 
-        print(f'\t[+] Vocabulary Size {len(set(vocabulary))}.')
+        print(f'  [+] Vocabulary Size {len(set(vocabulary))}.')
 
         for i, cap in enumerate(df.captions.values):
             new_cap = self.text_clean(cap)
@@ -53,7 +53,7 @@ class Flicker8K:
 
         with open(self.img_name, 'wb') as file:
             for ann in data['filename']:
-                full_image_path = image_path + ann
+                full_image_path = self.img_pth + ann
                 img_name.append(full_image_path)
 
             pickle.dump(img_name, file, protocol=pickle.HIGHEST_PROTOCOL)

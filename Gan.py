@@ -15,7 +15,7 @@ from inference import evaluate
 warnings.filterwarnings("ignore")
 
 image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
+dir_Flickr_text = "./Dataset/J"
 
 jpgs = os.listdir(image_path)
 print(f"Total image in dataset is {len(jpgs)}")
