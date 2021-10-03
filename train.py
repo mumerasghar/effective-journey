@@ -1,5 +1,5 @@
 from Models import *
-from data.create_dataset import create_dataset
+from data.Dataset import create_dataset
 from inference import evaluate
 
 import os
@@ -44,18 +44,12 @@ def loss_function(real, pred):
 
 
 def dis_loss(f_cap, r_cap):
-    b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
-
     r_output = critic(r_cap, True)
-    # r_output = tf.reshape(r_output, shape=(b_shape))
-    r_d_loss = loss_mse(r_label, r_output)
+    r_d_loss = loss_mse(tf.ones_like(r_output), r_output)
     r_d_loss = tf.reduce_sum(r_d_loss)
 
     f_output = critic(f_cap, True)
-    # f_output = tf.reshape(f_output, shape=(b_shape))
-    f_d_loss = loss_mse(f_label, f_output)
+    f_d_loss = loss_mse(tf.zeros_like(f_output), f_output)
     f_d_loss = tf.reduce_sum(f_d_loss)
 
     return r_d_loss + f_d_loss
@@ -63,13 +57,7 @@ def dis_loss(f_cap, r_cap):
 
 def gen_loss(tar_real, predictions, f_cap, r_cap):
     loss = loss_function(tar_real, predictions)
-
-    b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
-
     g_output = critic(r_cap, True)
-    # g_output = tf.reshape(g_output, shape=(b_shape))
     g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
