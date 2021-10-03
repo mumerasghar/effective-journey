@@ -1,308 +1,27 @@
-import json
 import os
-import pickle
 import time
-import string
 
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
+import yaml
 from tensorflow_addons.layers import SpectralNormalization
 
+from data import create_dataset
 from inference import evaluate
-
-# DIR = './Dataset/COCO/extracted/coco_training/'
-# CAP_FILE = './Dataset/COCO/captions.pickle'
-# IMG_NAME = './Dataset/COCO/img_name.pickle'
-# CAPTIONS = './Dataset/COCO/annotations/captions_train2014.json'
-#
-#
-# def copy_sub_data(a):
-#     _dest = './Dataset/COCO/extracted/coco_training/'
-#     _src = './Dataset/COCO/extracted/train2014/'
-#     import shutil
-#     a = a[0:40000]
-#     _atem = set(a)
-#     for i in _atem:
-#         _img = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(i)))])}{i}"
-#         shutil.copy(f'{_src}{_img}.jpg', _dest)
-#         shutil.copy(f'{_src}{_img}.jpg.npy', _dest)
-#
-#
-# def read_data():
-#     with open(CAPTIONS) as f:
-#         annotations = json.load(f)
-#         annotations = annotations['annotations']
-#
-#     data = []
-#     for item in annotations:
-#         t = (item['image_id'], item['caption'].lower())
-#         data.append(t)
-#
-#     data = pd.DataFrame(data, columns=['filename', 'captions'])
-#
-#     all_captions = []
-#     if os.path.isfile(CAP_FILE):
-#         print("found cached caption.pickle")
-#         with open(CAP_FILE, 'rb') as f:
-#             all_captions = pickle.load(f)
-#     else:
-#         print('formatting captions')
-#         with open(CAP_FILE, 'wb') as f:
-#             for caption in data['captions'].astype(str):
-#                 caption = '<start> ' + caption + ' <end>'
-#                 all_captions.append(caption)
-#             pickle.dump(all_captions, f, protocol=pickle.HIGHEST_PROTOCOL)
-#
-#     all_img_name = []
-#     if os.path.isfile(IMG_NAME):
-#         print('found cached img_name.pickle')
-#         with open(IMG_NAME, 'rb') as f:
-#             all_img_name = pickle.load(f)
-#     else:
-#         with open(IMG_NAME, 'wb') as f:
-#             for f_name in data['filename']:
-#                 c_addr = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(f_name)))])}{f_name}.jpg"
-#                 all_img_name.append(DIR + c_addr)
-#
-#             pickle.dump(all_img_name, f, protocol=pickle.HIGHEST_PROTOCOL)
-#
-#     return all_captions, all_img_name
-#
-#
-# ALL_CAPTIONS, ALL_IMG_NAME = read_data()
-
-# warnings.filterwarnings("ignore")
-
-image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
-
-jpgs = os.listdir(image_path)
-print(f"Total image in dataset is {len(jpgs)}")
-
-file = open(dir_Flickr_text, "r")
-text = file.read()
-file.close()
-
-datatxt = []
-for line in text.split("\n"):
-    col = line.split("\t")
-    if len(col) == 1:
-        continue
-
-    w = col[0].split("#")
-    datatxt.append(w + [col[1].lower()])
-
-data = pd.DataFrame(datatxt, columns=["filename", "index", "captions"])
-data = data.reindex(columns=["index", "filename", "captions"])
-data = data[data.filename != "2258277193_586949ec62.jpg.1"]
-uni_filenames = np.unique(data.filename.values)
-
-npic = 5
-npix = 224
-target_size = (npix, npix, 3)
-count = 1
-
-vocabulary = []
-for txt in data.captions.values:
-    vocabulary.extend(txt.split())
-
-print(f"Vocublary Size {len(set(vocabulary))}")
-
-
-def remove_punctutation(text_original):
-    text_no_punctuation = text_original.translate(
-        str.maketrans("", "", string.punctuation)
-    )
-    return text_no_punctuation
-
-
-def remove_single_character(text):
-    text_len_more_than1 = ""
-    for word in text.split():
-        if len(word) > 1:
-            text_len_more_than1 += " " + word
-
-    return text_len_more_than1
-
-
-def remove_numeric(text):
-    text_no_numeric = ""
-
-    for word in text.split():
-        isalpha = word.isalpha()
-
-        if isalpha:
-            text_no_numeric += " " + word
-
-    return text_no_numeric
-
-
-def text_clean(text_original):
-    text = remove_punctutation(text_original)
-    text = remove_single_character(text)
-    text = remove_numeric(text)
-
-    return text
-
-
-for i, caption in enumerate(data.captions.values):
-    newcaption = text_clean(caption)
-    data["captions"].iloc[1] = newcaption
-
-clean_vocab = []
-
-for txt in data.captions.values:
-    clean_vocab.extend(txt.split())
-
-print(len(set(clean_vocab)))
-
-all_captions = []
-
-for caption in data["captions"].astype(str):
-    caption = "<start> " + caption + " <end>"
-    all_captions.append(caption)
-
-all_img_name_vector = []
-for annot in data["filename"]:
-    full_image_path = image_path + annot
-    all_img_name_vector.append(full_image_path)
-
-
-def data_limiter(num, captions, img_name_vector):
-    t_cap = captions[:num]
-    i_name_vec = img_name_vector[:num]
-    t_cap, i_name_vec = shuffle(t_cap, i_name_vec, random_state=1)
-    return t_cap, i_name_vec
-
-
-print('delimiting data')
-train_captions, img_name_vector = data_limiter(40000, all_captions, all_img_name_vector)
-
-
-def load_image(image_path):
-    print(image_path)
-    img = tf.io.read_file(image_path)
-    img = tf.image.decode_jpeg(img, channels=3)
-
-    img = tf.image.resize(img, (299, 299))
-    img = tf.keras.applications.inception_v3.preprocess_input(img)
-    return img, image_path
-
-
-top_k = 5000
-
-print("tokenizer")
-tokenizer = tf.keras.preprocessing.text.Tokenizer(
-    num_words=top_k, oov_token="<unk>", filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ '
-)
-tokenizer.fit_on_texts(train_captions)
-
-train_seqs = tokenizer.texts_to_sequences(train_captions)
-tokenizer.word_index["<pad>"] = 0
-train_seqs = tokenizer.texts_to_sequences(train_captions)
-cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding="post")
-
-img_name_train, img_name_val, cap_train, cap_val = train_test_split(
-    img_name_vector, cap_vector, test_size=0.2, random_state=0
-)
-
-BATCH_SIZE = 32
-BUFFER_SIZE = 256
-num_steps = len(img_name_train)
-
-
-def map_func(img_name, cap):
-    img_tensor = np.load(img_name.decode("utf-8") + ".npy")
-    return img_tensor, cap
-
-
-print("creating dataste")
-dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
-dataset = dataset.map(
-    lambda item1, item2: tf.numpy_function(
-        map_func, [item1, item2], [tf.float32, tf.int32]
-    ),
-    num_parallel_calls=tf.data.experimental.AUTOTUNE,
-)
-dataset = dataset.shuffle(128).batch(BATCH_SIZE)
-dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-
-def v_load_pre_image(image_path):
-    img = tf.io.read_file(image_path)
-    img = tf.image.decode_jpeg(img, channels=3)
-    img = tf.image.resize(img, (64, 64))
-    return img
-
-
-def v_map_func(img_name, cap):
-    img_tensor = np.load(img_name.decode("utf-8") + ".npy")
-    image = v_load_pre_image(img_name.decode("utf-8"))
-    return img_tensor, cap, img_name, image
-
-
-i_data = tf.data.Dataset.from_tensor_slices((img_name_val, cap_val))
-i_data = i_data.map(
-    lambda item1, item2: tf.numpy_function(
-        v_map_func, [item1, item2], [tf.float32, tf.int32, tf.string, tf.float32]
-    ),
-    num_parallel_calls=tf.data.experimental.AUTOTUNE,
-)
-i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
-i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-
-def get_angles(pos, i, d_model):
-    angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
-    return pos * angle_rates
-
-
-def positional_encoding_1d(position, d_model):
-    angle_rads = get_angles(
-        np.arange(position)[:, np.newaxis], np.arange(d_model)[np.newaxis, :], d_model
-    )
-    angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
-    angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
-
-    pos_encoding = angle_rads[np.newaxis, ...]
-    return tf.cast(pos_encoding, dtype=tf.float32)
-
-
-def positional_encoding_2d(row, col, d_model):
-    assert d_model % 2 == 0
-    row_pos = np.repeat(np.arange(row), col)[:, np.newaxis]
-    col_pos = np.repeat(np.expand_dims(np.arange(col), 0), row, axis=0).reshape(-1, 1)
-
-    angle_rads_row = get_angles(
-        row_pos, np.arange(d_model // 2)[np.newaxis, :], d_model // 2
-    )
-    angle_rads_col = get_angles(
-        col_pos, np.arange(d_model // 2)[np.newaxis, :], d_model // 2
-    )
-
-    angle_rads_row[:, 0::2] = np.sin(angle_rads_row[:, 0::2])
-    angle_rads_row[:, 1::2] = np.cos(angle_rads_row[:, 1::2])
-
-    angle_rads_col[:, 0::2] = np.sin(angle_rads_col[:, 0::2])
-    angle_rads_col[:, 1::2] = np.cos(angle_rads_col[:, 1::2])
-
-    pos_encoding = np.concatenate([angle_rads_row, angle_rads_col], axis=1)[
-        np.newaxis, ...
-    ]
-    return tf.cast(pos_encoding, dtype=tf.float32)
-
-
-def create_padding_mask(seq):
-    seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
-    return seq[:, tf.newaxis, tf.newaxis, :]
-
-
-def create_look_ahead_mask(size):
-    mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-    return mask
+from utils import *
+
+DATASET = 'FLICKER'
+with open('./cfg/cfg.yaml', 'r') as f:
+    cfg = yaml.load(f)
+    cfg = cfg[DATASET]
+
+paths = {
+    "image_path": cfg['IMG_PATH'],
+    "text_path": cfg["TXT_PATH"],
+    "cap_file": cfg["CAP_FILE"],
+    "img_name": cfg["IMG_NAME"],
+    "dataset": cfg["DATASET_NAME"]
+}
+
+dataset, i_data, tokenizer = create_dataset(cfg)
 
 
 def scaled_dot_product_attention(q, k, v, mask):
@@ -552,7 +271,7 @@ class Decoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
 
         self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
-        self.pos_embedding = positional_encoding_1d(maximum_position_encoding, d_model)
+        self.pos_embedding = positional_encoding(maximum_position_encoding, d_model)
 
         self.dec_layers = [
             DecoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
@@ -584,7 +303,7 @@ class Transformer(tf.keras.Model):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
         # self.encoder = SelfAttention(2048)
-        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate, )
+        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
     def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None, ):
@@ -595,15 +314,26 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
+class Critic(tf.keras.Model):
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate=0.1):
+        super().__init__()
+        self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
+        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
+        self.final = tf.keras.layers.LSTM(1)
+
+    def call(self, inp, tar, training=True):
+        enc_output = self.encoder(inp, training)
+        dec_outut, _ = self.decoder(tar, enc_output, training)
+        out = self.final(dec_outut)
+        return out
+
+
 dff = 2048
 d_model = 512
 num_layer = 4
 num_heads = 8
 dropout_rate = 0.1
 target_vocab_size = 5000 + 1
-
-
-# target_vocab_size = top_k + 1
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -638,51 +368,51 @@ def loss_function(real, pred):
     return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 
-def critic_feed_forward(d_model, dff):
-    return tf.keras.Sequential(
-        [
-            SpectralNormalization(tf.keras.layers.Dense(dff)),
-            tf.keras.layers.LeakyReLU(alpha=0.1),
-            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
-        ]
-    )
-
-
-class Critic(tf.keras.Model):
-    def __init__(self, d_output=1, d_input=512, rate=0.1):
-        super(Critic, self).__init__()
-
-        self.mha1 = MultiHeadedAttention(512, 8)
-        self.mha2 = MultiHeadedAttention(512, 2)
-
-        self.norm1 = SpectralNormalization(
-            tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        )
-        self.norm2 = SpectralNormalization(
-            tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        )
-        self.norm3 = SpectralNormalization(
-            tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        )
-
-        self.dropout1 = tf.keras.layers.Dropout(rate)
-        self.dropout2 = tf.keras.layers.Dropout(rate)
-        self.dropout3 = tf.keras.layers.Dropout(rate)
-
-        self.ffn = critic_feed_forward(d_output, d_input)
-
-    def call(self, x, training):
-        att1, _ = self.mha1(x, x, x)
-        out1 = self.dropout1(att1, training=training)
-        # out1 = self.norm1(att1 + x)
-
-        att2, _ = self.mha2(out1, out1, x)
-        out2 = self.dropout2(att2, training=training)
-        # out2 = self.norm2(att2 + x)
-
-        ffn_output = self.ffn(out2)
-        ffn_output = self.dropout3(ffn_output, training=training)
-        return ffn_output
+# def critic_feed_forward(d_model, dff):
+#     return tf.keras.Sequential(
+#         [
+#             SpectralNormalization(tf.keras.layers.Dense(dff)),
+#             tf.keras.layers.LeakyReLU(alpha=0.1),
+#             SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
+#         ]
+#     )
+#
+#
+# class Critic(tf.keras.Model):
+#     def __init__(self, d_output=1, d_input=512, rate=0.1):
+#         super(Critic, self).__init__()
+#
+#         self.mha1 = MultiHeadedAttention(512, 8)
+#         self.mha2 = MultiHeadedAttention(512, 2)
+#
+#         self.norm1 = SpectralNormalization(
+#             tf.keras.layers.LayerNormalization(epsilon=1e-6)
+#         )
+#         self.norm2 = SpectralNormalization(
+#             tf.keras.layers.LayerNormalization(epsilon=1e-6)
+#         )
+#         self.norm3 = SpectralNormalization(
+#             tf.keras.layers.LayerNormalization(epsilon=1e-6)
+#         )
+#
+#         self.dropout1 = tf.keras.layers.Dropout(rate)
+#         self.dropout2 = tf.keras.layers.Dropout(rate)
+#         self.dropout3 = tf.keras.layers.Dropout(rate)
+#
+#         self.ffn = critic_feed_forward(d_output, d_input)
+#
+#     def call(self, x, training):
+#         att1, _ = self.mha1(x, x, x)
+#         out1 = self.dropout1(att1, training=training)
+#         # out1 = self.norm1(att1 + x)
+#
+#         att2, _ = self.mha2(out1, out1, x)
+#         out2 = self.dropout2(att2, training=training)
+#         # out2 = self.norm2(att2 + x)
+#
+#         ffn_output = self.ffn(out2)
+#         ffn_output = self.dropout3(ffn_output, training=training)
+#         return ffn_output
 
 
 train_loss = tf.keras.metrics.Mean(name="train_loss")
@@ -691,7 +421,8 @@ train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accu
 transformer = Transformer(num_layer, d_model, num_heads, dff, target_vocab_size,
                           max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
-critic = Critic()
+critic = Critic(num_layer, d_model, num_heads, dff, target_vocab_size,
+                max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
 
 def create_masks_decoder(tar):
@@ -701,34 +432,24 @@ def create_masks_decoder(tar):
     return combined_mask
 
 
-def dis_loss(f_cap, r_cap):
-    b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
-
-    r_output = critic(r_cap, True)
-    # r_output = tf.reshape(r_output, shape=(b_shape))
-    r_d_loss = loss_mse(r_label, r_output)
+def dis_loss(f_cap, r_cap, img_tensor):
+    r_output = critic(img_tensor, r_cap)
+    r_d_loss = loss_mse(tf.ones_like(r_output), r_output)
     r_d_loss = tf.reduce_sum(r_d_loss)
 
-    f_output = critic(f_cap, True)
-    # f_output = tf.reshape(f_output, shape=(b_shape))
-    f_d_loss = loss_mse(f_label, f_output)
+    f_output = critic(img_tensor, f_cap)
+    f_d_loss = loss_mse(tf.zeros_like(f_output), f_output)
     f_d_loss = tf.reduce_sum(f_d_loss)
 
     return r_d_loss + f_d_loss
 
 
-def gen_loss(tar_real, predictions, f_cap, r_cap):
+def gen_loss(tar_real, predictions, r_cap, img_tensor):
     loss = loss_function(tar_real, predictions)
 
-    b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
+    g_output = critic(img_tensor, r_cap)
 
-    g_output = critic(r_cap, True)
-    # g_output = tf.reshape(g_output, shape=(b_shape))
-    g_loss = loss_mse(r_label, g_output)
+    g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
     return loss + g_loss
@@ -745,11 +466,11 @@ def train_step(img_tensor, tar):
         predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
 
-        loss = gen_loss(tar_real, predictions, f_cap, tar_real)
+        loss = gen_loss(tar_real, predictions, tar_real, img_tensor)
         gradients = tape.gradient(loss, transformer.trainable_variables)
         optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
 
-        d_loss = dis_loss(f_cap, tar_real)
+        d_loss = dis_loss(f_cap, tar_real, img_tensor)
         d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
         optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
 
@@ -758,7 +479,7 @@ def train_step(img_tensor, tar):
 
 
 def generate_caption():
-    for img_tensor, cap, img_name, image in i_data.take(1):
+    for img_tensor, cap, img_name in i_data.take(1):
         f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
         return names, f_cap, r_cap
 
@@ -792,7 +513,7 @@ def main(epochs, o_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar)) in enumerate(dataset):
+        for (batch, (img_tensor, tar, img_name)) in enumerate(dataset):
             train_step(img_tensor, tar)
 
             if batch % 50 == 0:
@@ -827,9 +548,7 @@ if __name__ == "__main__":
     main(30, False)
 
 else:
-    pass
     from inference import karpathy_inference
 
-    #
     checkpoint_manager()
     karpathy_inference(tokenizer, transformer)
