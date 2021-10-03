@@ -7,9 +7,9 @@ warnings.filterwarnings("ignore")
 from sklearn.utils import shuffle
 
 results = {}
-karpathytest = './Dataset/COCO/splits/finalkarpathysplit_test.json'
+karpathy_test = './Dataset/COCO/splits/finalkarpathysplit_test.json'
 
-f = open(karpathytest, )
+f = open(karpathy_test)
 dict1 = json.load(f)
 dict2 = dict()
 
@@ -18,7 +18,6 @@ for keys in dict1:
 
 
 def append_to_list(id, name):
-
     word = tokenizer.index_word[int(id[0])]
     if name in results.keys():
         if results[name][len(results[name]) - 1] != '<end>':
@@ -73,7 +72,7 @@ def evaluate(image, names, tokenize, transformer, show=True):
         output = tf.concat([output, predicted_id], axis=-1)
 
 
-def karpathy_inference(tokenizer,transformer):
+def karpathy_inference(tokenizer, transformer):
     l = (dict2.keys())
     l = list(set(l))
 
@@ -86,7 +85,6 @@ def karpathy_inference(tokenizer,transformer):
     for batch_idx, (image, names) in enumerate(i_data):
         print(f'Karpathy split inference : {batch_idx}')
         evaluate(image, names, tokenizer, transformer)
-
 
     finallist = []
     for i in results.keys():

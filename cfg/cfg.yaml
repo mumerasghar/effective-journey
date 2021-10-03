@@ -1,0 +1,15 @@
+COCO:
+  IMG_PATH: './Dataset/COCO/extracted/coco_training/'
+  TXT_PATH: './Dataset/COCO/annotations/captions_train2014.json'
+  CAP_FILE: './Dataset/COCO/captions.pickle'
+  IMG_NAME: './Dataset/COCO/img_name.pickle'
+  DATASET_NAME: 'COCO'
+  BATCH_SIZE: 32
+
+FLICKER:
+  IMG_PATH: './Dataset/Flicker/Flicker8k_Dataset/'
+  TXT_PATH: './Dataset/Flicker/Flickr8k.token.txt'
+  CAP_FILE: './Dataset/Flicker/captions.pickle'
+  IMG_NAME: './Dataset/Flicker/img_name.pickle'
+  DATASET_NAME: 'Flicker'
+  BATCH_SIZE: 64

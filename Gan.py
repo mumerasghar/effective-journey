@@ -15,7 +15,7 @@ from inference import evaluate
 warnings.filterwarnings("ignore")
 
 image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
+dir_Flickr_text = "./Dataset/J"
 
 jpgs = os.listdir(image_path)
 print(f"Total image in dataset is {len(jpgs)}")
@@ -615,13 +615,7 @@ loss_mse = tf.keras.losses.BinaryCrossentropy()
 optimizer_c = tf.keras.optimizers.Adam(0.0004, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
 
-def loss_function(real, pred):
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    loss_ = loss_object(real, pred)
 
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 
 def critic_feed_forward(d_model, dff):
@@ -686,20 +680,27 @@ def create_masks_decoder(tar):
     combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
     return combined_mask
 
+def loss_function(real, pred):
+    mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_ = loss_object(real, pred)
+
+    mask = tf.cast(mask, dtype=loss_.dtype)
+    loss_ *= mask
+    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 def dis_loss(f_cap, r_cap):
     b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
+    # f_label = tf.zeros([b_shape, 1, 1])
+    # r_label = tf.ones([b_shape, 1, 1])
 
     r_output = critic(r_cap, True)
     # r_output = tf.reshape(r_output, shape=(b_shape))
-    r_d_loss = loss_mse(r_label, r_output)
+    r_d_loss = loss_mse(tf.ones_like(r_output), r_output)
     r_d_loss = tf.reduce_sum(r_d_loss)
 
     f_output = critic(f_cap, True)
     # f_output = tf.reshape(f_output, shape=(b_shape))
-    f_d_loss = loss_mse(f_label, f_output)
+    f_d_loss = loss_mse(tf.zeros_like(f_output), f_output)
     f_d_loss = tf.reduce_sum(f_d_loss)
 
     return r_d_loss + f_d_loss
@@ -709,12 +710,13 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     loss = loss_function(tar_real, predictions)
 
     b_shape = f_cap.shape[0]
-    f_label = tf.zeros([b_shape, 1, 1])
-    r_label = tf.ones([b_shape, 1, 1])
+    # f_label = tf.zeros([b_shape, 1, 1])
+    # r_label = tf.ones([b_shape, 1, 1])
 
     g_output = critic(r_cap, True)
     # g_output = tf.reshape(g_output, shape=(b_shape))
-    g_loss = loss_mse(r_label, g_output)
+    # g_loss = loss_mse(r_label, g_output)
+    g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
     return loss + g_loss

@@ -1,24 +1,16 @@
 from Models import *
-from data.create_dataset import create_dataset, tokenizer
+from data.create_dataset import create_dataset
 from inference import evaluate
 
 import os
+import yaml
 import time
-import warnings
-
-warnings.filterwarnings("ignore")
 
 DFF = 2048
-LAMBDA = 10
-ROW_SIZE = 8
-COL_SIZE = 8
-NUM_HEADS = 8
-D_MODEL = 512
+NUM_HEADS = 12
+D_MODEL = 768
 NUM_LAYERS = 4
-BATCH_SIZE = 64
 DROPOUT_RATE = 0.1
-CRITIC_ITERATIONS = 2
-LATENT_DIMENSION = 100
 TARGET_VOCAB_SIZE = 5000 + 1
 
 
@@ -40,6 +32,15 @@ def create_masks_decoder(tar):
     dec_target_padding_mask = create_padding_mask(tar)
     combined_mask = tf.maximum(dec_target_padding_mask, look_ahead_mask)
     return combined_mask
+
+
+def loss_function(real, pred):
+    mask = tf.math.logical_not(tf.math.equal(real, 0))
+    loss_ = loss_object(real, pred)
+
+    mask = tf.cast(mask, dtype=loss_.dtype)
+    loss_ *= mask
+    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
 
 
 def dis_loss(f_cap, r_cap):
@@ -69,25 +70,16 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
 
     g_output = critic(r_cap, True)
     # g_output = tf.reshape(g_output, shape=(b_shape))
-    g_loss = loss_mse(r_label, g_output)
+    g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
     return loss + g_loss
 
 
-def loss_function(real, pred):
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    loss_ = loss_object(real, pred)
-
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-    return tf.reduce_sum(loss_) / tf.reduce_sum(mask)
-
-
 # ###################################### TRAINING FUNCTIONS #########################################
 
-@tf.function
-def train_step(img_tensor, tar, img_name, img):
+# @tf.function
+def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
@@ -109,8 +101,8 @@ def train_step(img_tensor, tar, img_name, img):
     train_accuracy(tar_real, predictions)
 
 
-def generate_caption():
-    for img_tensor, cap, img_name, image in i_dataset.take(1):
+def generate_caption(tokenizer):
+    for img_tensor, cap, img_name in i_dataset.take(1):
         f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
         return names, f_cap, r_cap
 
@@ -137,7 +129,7 @@ def checkpoint():
 print('Going for training')
 
 
-def train(dataset, epochs, t_break=False):
+def train(dataset, epochs, tokenizer, t_break=False):
     ckpt_manager = checkpoint()
     for epoch in range(epochs):
 
@@ -145,8 +137,8 @@ def train(dataset, epochs, t_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar, img_name, img)) in enumerate(dataset):
-            train_step(img_tensor, tar, img_name, img)
+        for (batch, (img_tensor, tar, img_name)) in enumerate(dataset):
+            train_step(img_tensor, tar)
 
             if batch % 50 == 0:
                 print(
@@ -158,7 +150,7 @@ def train(dataset, epochs, t_break=False):
         log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 
         with open("result.txt", "a") as f:
-            name, f_cap, r_cap = generate_caption()
+            name, f_cap, r_cap = generate_caption(tokenizer)
             f.write(f"{log_accuracy}\n")
             f.write(f"{log_time}\n\n")
             f.write(f"img_name:{name},\nr_cap: {r_cap}\nfake: {f_cap}\n")
@@ -173,11 +165,16 @@ def train(dataset, epochs, t_break=False):
 
 # ################################  IMAGE2TEXT NETWORK AND OPTIMIZER ################################
 
+DATASET = 'COCO'
+with open('./cfg/cfg.yaml', 'r') as f:
+    cfg = yaml.load(f)
+    cfg = cfg[DATASET]
+
 learning_rate = CustomSchedule(D_MODEL)
 transformer = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
                           max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
 # critic = Critic(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF)
-critic = Critic()
+critic = Critic(D_MODEL, NUM_HEADS)
 
 optimizer_g = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
@@ -187,9 +184,17 @@ optimizer_c = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, e
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name='train_accuracy')
 
-dataset, i_dataset = create_dataset()
+dataset, i_dataset, tokenizer = create_dataset(cfg)
 
 if __name__ == '__main__':
-    train(dataset, 30)
+    if os.path.isfile('result.txt'):
+        with open('result.txt', 'w') as file:
+            file.write('\t\tBASIC GANS\n')
+            file.write('-' * 100 + '\n')
+            file.close()
+    train(dataset, 30, tokenizer)
 else:
+    from inference import karpathy_inference
+
     checkpoint()
+    karpathy_inference(tokenizer, transformer)
