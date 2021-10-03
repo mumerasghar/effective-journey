@@ -1,4 +1,5 @@
 from utils import *
+from .PreAttention import *
 from .MultiHeadAttention import MultiHeadedAttention
 from tensorflow_addons.layers import SpectralNormalization
 
@@ -72,27 +73,70 @@ class DecoderLayer(tf.keras.layers.Layer):
         return out3, attn_weights_block1, attn_weights_block2
 
 
-class Encoder(tf.keras.layers.Layer):
+# class Encoder(tf.keras.layers.Layer):
+#
+#     def __init__(self, num_layers, d_model, num_heads, dff, rate=0.1):
+#         super().__init__()
+#         self.d_model = d_model
+#         self.num_layers = num_layers
+#
+#         self.embedding = SpectralNormalization(
+#             tf.keras.layers.Dense(self.d_model,
+#                                   activation='relu',
+#                                   kernel_initializer=kaiming))
+#
+#         self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
+#         self.dropout = tf.keras.layers.Dropout(rate)
+#
+#     def call(self, inp, training, mask=None):
+#         x = inp
+#         x = self.embedding(x)
+#         x = self.dropout(x, training=training)
+#         for i in range(self.num_layers):
+#             x = self.enc_layers[i](x, x, x, training, mask)
+#         return x
 
+class Encoder(tf.keras.layers.Layer):
     def __init__(self, num_layers, d_model, num_heads, dff, rate=0.1):
         super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
 
-        self.embedding = SpectralNormalization(
-            tf.keras.layers.Dense(self.d_model,
-                                  activation='relu',
-                                  kernel_initializer=kaiming))
+        self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
+        self.enc_layers = [
+            EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
+        ]
 
-        self.enc_layers = [EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)]
+        self.s_attention = []
+        for _ in range(num_layers):
+            if _ == 0:
+                self.s_attention.append(SelfAttention(dff, d_model, convert_dim=True))
+            else:
+                self.s_attention.append(SelfAttention(d_model, d_model))
+
         self.dropout = tf.keras.layers.Dropout(rate)
+        # skeptical of being using relu here.
+        self.conv_net = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(d_model, (3, 3), padding='same', activation='relu')
+        ])
 
-    def call(self, inp, training, mask=None):
-        x = inp
+    def call(self, x, training, mask=None):
+
+        inp = x
         x = self.embedding(x)
         x = self.dropout(x, training=training)
+
         for i in range(self.num_layers):
-            x = self.enc_layers[i](x, x, x, training, mask)
+            if i == 0:
+                _atn_module = self.s_attention[i](inp)
+            else:
+                _atn_module = self.s_attention[i](x)
+            _enc_out = self.enc_layers[i](x, training, mask)
+            _x = tf.concat([_atn_module, _enc_out], axis=-1)
+            _x = tf.reshape(_x, (-1, 8, 8, self.d_model * 2))
+            _x = self.conv_net(_x)
+            x = tf.reshape(_x, (-1, 64, self.d_model))
+
         return x
 
 
