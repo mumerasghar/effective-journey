@@ -192,4 +192,8 @@ dataset, i_dataset, tokenizer = create_dataset(cfg)
 if __name__ == '__main__':
     train(dataset, 30, tokenizer)
 else:
+    from inference import karpathy_inference
+
+    #
     checkpoint()
+    karpathy_inference(tokenizer, transformer)

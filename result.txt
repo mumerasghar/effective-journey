@@ -1702,3 +1702,206 @@ img_name:[b'./Dataset/Flicker/Flicker8k_Dataset/2945036454_280fa5b29f.jpg'],
 r_cap:  <start>  the  yellow  dog  is  trying  to  catch  a  red  frisbee  <end>
 fake:  a  dog  is  running  through  a  field
 ----------------------------------------------------------------------------------------------------
+Epoch 1, Batch 999, Loss 6.269789218902588, Accuracy 17.5158
+Time taken for 1 epoch : 187.74300074577332 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000277167.jpg'],
+r_cap:  <start>  a  white  toilet  sitting  under  a  bathroom  window  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  a  toilet
+----------------------------------------------------------------------------------------------------
+Epoch 3, Batch 999, Loss 4.117527008056641, Accuracy 17.1104
+Time taken for 1 epoch : 87.65964555740356 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000103393.jpg'],
+r_cap:  <start>  the  bike  is  <unk>  on  the  front  of  a  city  bus  as  another  passes  <end>
+fake:  a  man  riding  a  bike  down  a  street
+----------------------------------------------------------------------------------------------------
+Epoch 4, Batch 999, Loss 6.329973220825195, Accuracy 16.8931
+Time taken for 1 epoch : 85.33416271209717 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000401569.jpg'],
+r_cap:  <start>  this  bathroom  has  portraits  hanging  on  the  wall  <end>
+fake:  a  bathroom  with  a  toilet  and  a  sink
+----------------------------------------------------------------------------------------------------
+Epoch 5, Batch 999, Loss 7.227536678314209, Accuracy 16.7117
+Time taken for 1 epoch : 86.41624689102173 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000215878.jpg'],
+r_cap:  <start>  a  microwave  has  lots  of  christmas  decorations  around  it  <end>
+fake:  a  bathroom  with  a  toilet  and  a  sink
+----------------------------------------------------------------------------------------------------
+Epoch 6, Batch 999, Loss 5.280521869659424, Accuracy 16.5874
+Time taken for 1 epoch : 86.93068289756775 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000172463.jpg'],
+r_cap:  <start>  a  bathroom  with  blue  walls  and  white  tiles  <end>
+fake:  a  bathroom  with  a  toilet  and  a  sink
+----------------------------------------------------------------------------------------------------
+Epoch 7, Batch 999, Loss 4.917207717895508, Accuracy 16.4868
+Time taken for 1 epoch : 86.27912378311157 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000266273.jpg'],
+r_cap:  <start>  a  small  boy  standing  in  a  kitchen  next  to  a  counter  <end>
+fake:  a  man  standing  in  a  kitchen  with  a  sink
+----------------------------------------------------------------------------------------------------
+Epoch 8, Batch 999, Loss 4.060047626495361, Accuracy 16.4757
+Time taken for 1 epoch : 85.19244503974915 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000239933.jpg'],
+r_cap:  <start>  three  sports  motorcycles  and  a  truck  in  a  parking  lot  <end>
+fake:  a  man  is  riding  a  motorcycle  down  a  street
+----------------------------------------------------------------------------------------------------
+Epoch 9, Batch 999, Loss 4.06473970413208, Accuracy 16.4911
+Time taken for 1 epoch : 94.31933951377869 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000088330.jpg'],
+r_cap:  <start>  two  bicycles  are  standing  by  a  train  doorway  <end>
+fake:  a  bike  parked  next  to  a  fence  on  a  sidewalk
+----------------------------------------------------------------------------------------------------
+Epoch 10, Batch 999, Loss 3.4962708950042725, Accuracy 16.4285
+Time taken for 1 epoch : 88.66875314712524 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000160516.jpg'],
+r_cap:  <start>  a  woman  placing  food  from  her  hand  in  her  mouth  <end>
+fake:  a  man  is  holding  a  cell  phone  in  his  lap
+----------------------------------------------------------------------------------------------------
+Epoch 11, Batch 999, Loss 3.6407361030578613, Accuracy 16.4732
+Time taken for 1 epoch : 87.64009356498718 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000500323.jpg'],
+r_cap:  <start>  a  line  of  bikers  sit  on  their  motorcycles  <end>
+fake:  a  man  riding  a  motorcycle  down  a  street
+----------------------------------------------------------------------------------------------------
+Epoch 12, Batch 999, Loss 3.6724724769592285, Accuracy 16.4574
+Time taken for 1 epoch : 93.38059949874878 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000261151.jpg'],
+r_cap:  <start>  a  person  standing  near  the  street  at  a  fire  hydrant  <end>
+fake:  a  man  is  sitting  on  a  bench  next  to  a  wall
+----------------------------------------------------------------------------------------------------
+Epoch 13, Batch 999, Loss 4.045669078826904, Accuracy 16.3969
+Time taken for 1 epoch : 92.43773865699768 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000119358.jpg'],
+r_cap:  <start>  a  bathroom  with  a  sink  tiled  shower  and  wooden  floor  <end>
+fake:  a  kitchen  with  a  table  chairs  and  chairs
+----------------------------------------------------------------------------------------------------
+Epoch 14, Batch 999, Loss 3.2997312545776367, Accuracy 16.3964
+Time taken for 1 epoch : 85.96668267250061 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000055398.jpg'],
+r_cap:  <start>  a  <unk>  <unk>  and  <unk>  posing  in  a  kitchen  <end>
+fake:  a  man  standing  in  a  kitchen  with  a  baby  and  a  coffee  glass  glass  glass
+----------------------------------------------------------------------------------------------------
+Epoch 15, Batch 999, Loss 3.1217901706695557, Accuracy 16.3846
+Time taken for 1 epoch : 86.76625990867615 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000047229.jpg'],
+r_cap:  <start>  a  bathroom  with  one  sink  and  the  door  open  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  shower
+----------------------------------------------------------------------------------------------------
+Epoch 16, Batch 999, Loss 2.9554061889648438, Accuracy 16.4530
+Time taken for 1 epoch : 87.98106265068054 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000508885.jpg'],
+r_cap:  <start>  a  round  sink  that  is  under  a  mirror  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  shower
+----------------------------------------------------------------------------------------------------
+Epoch 17, Batch 999, Loss 2.8177313804626465, Accuracy 16.4424
+Time taken for 1 epoch : 88.98823690414429 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000116663.jpg'],
+r_cap:  <start>  a  picture  of  dogs  that  are  in  a  car  <end>
+fake:  a  cat  sitting  in  the  driver's  seat  of  a  car
+----------------------------------------------------------------------------------------------------
+Epoch 18, Batch 999, Loss 2.832223415374756, Accuracy 16.3942
+Time taken for 1 epoch : 86.37049555778503 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000506183.jpg'],
+r_cap:  <start>  a  fighter  jet  plane  on  an  airport  runway  <end>
+fake:  a  small  plane  flying  over  a  city
+----------------------------------------------------------------------------------------------------
+Epoch 19, Batch 999, Loss 2.743863105773926, Accuracy 16.4119
+Time taken for 1 epoch : 90.08411359786987 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000038663.jpg'],
+r_cap:  <start>  three  men  in  a  garage  looking  over  a  motorcycle  <end>
+fake:  a  man  sitting  on  a  motorcycle  outside  a  window
+----------------------------------------------------------------------------------------------------
+Epoch 20, Batch 999, Loss 2.519854784011841, Accuracy 16.4862
+Time taken for 1 epoch : 88.53210496902466 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000047229.jpg'],
+r_cap:  <start>  a  bathroom  with  one  sink  and  the  door  open  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  shower  a  bathroom  with  a  toilet  sink  and  a  mirror
+----------------------------------------------------------------------------------------------------
+Epoch 21, Batch 999, Loss 2.565626621246338, Accuracy 16.4694
+Time taken for 1 epoch : 87.1680359840393 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000554040.jpg'],
+r_cap:  <start>  a  bathroom  with  a  map  of  a  train's  stops  as  a  shower  curtain  <end>
+fake:  a  bathroom  with  a  sink  and  toilet
+----------------------------------------------------------------------------------------------------
+Epoch 22, Batch 999, Loss 2.5248987674713135, Accuracy 16.5390
+Time taken for 1 epoch : 89.01089477539062 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000310807.jpg'],
+r_cap:  <start>  a  bathroom  with  black  and  white  floor  tile  and  a  standing  shower  <end>
+fake:  a  bathroom  with  a  sink  and  a  toilet
+----------------------------------------------------------------------------------------------------
+Epoch 23, Batch 999, Loss 2.4217422008514404, Accuracy 16.4811
+Time taken for 1 epoch : 86.63878297805786 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000187157.jpg'],
+r_cap:  <start>  a  white  toilet  sitting  next  to  a  white  sink  in  a  bathroom  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  shower
+----------------------------------------------------------------------------------------------------
+Epoch 24, Batch 999, Loss 2.4377803802490234, Accuracy 16.4644
+Time taken for 1 epoch : 89.20791530609131 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000178998.jpg'],
+r_cap:  <start>  a  motorcyclist  paused  at  a  <unk>  on  a  mountain  road  <end>
+fake:  a  man  in  a  black  shirt  and  a  horse
+----------------------------------------------------------------------------------------------------
+Epoch 25, Batch 999, Loss 2.3798394203186035, Accuracy 16.3714
+Time taken for 1 epoch : 89.90688991546631 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000365996.jpg'],
+r_cap:  <start>  a  man  sitting  on  a  block  wall  with  a  skateboard  <end>
+fake:  a  man  sitting  on  a  bench  next  to  a  bike
+----------------------------------------------------------------------------------------------------
+Epoch 26, Batch 999, Loss 2.2828879356384277, Accuracy 16.3562
+Time taken for 1 epoch : 85.90995979309082 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000397724.jpg'],
+r_cap:  <start>  a  bathroom  that's  pink  and  white  with  black  toilet  seat  <end>
+fake:  a  bathroom  with  a  toilet  sink  and  mirror
+----------------------------------------------------------------------------------------------------
+Epoch 27, Batch 999, Loss 2.4192869663238525, Accuracy 16.3699
+Time taken for 1 epoch : 90.08047437667847 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000371134.jpg'],
+r_cap:  <start>  one  plane  taking  off  and  another  ready  to  land  <end>
+fake:  a  small  plane  flying  through  the  sky
+----------------------------------------------------------------------------------------------------
+Epoch 28, Batch 999, Loss 2.395676851272583, Accuracy 16.3383
+Time taken for 1 epoch : 86.19361686706543 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000263599.jpg'],
+r_cap:  <start>  a  large  passenger  jet  flying  through  a  gray  sky  <end>
+fake:  a  small  airplane  flying  through  a  bright  blue  sky
+----------------------------------------------------------------------------------------------------
+Epoch 29, Batch 999, Loss 2.2106361389160156, Accuracy 16.2948
+Time taken for 1 epoch : 90.14691853523254 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000197169.jpg'],
+r_cap:  <start>  four  people  playing  an  electronic  version  of  monopoly  <end>
+fake:  a  man  standing  in  a  doorway  with  a  <unk>
+----------------------------------------------------------------------------------------------------
+Epoch 30, Batch 999, Loss 2.1361329555511475, Accuracy 16.2774
+Time taken for 1 epoch : 91.68364381790161 secs
+
+img_name:[b'./Dataset/COCO/extracted/coco_training/COCO_train2014_000000194336.jpg'],
+r_cap:  <start>  the  man  covered  in  snow  is  standing  next  to  a  bicycle  <end>
+fake:  a  man  is  standing  next  to  a  bike
+----------------------------------------------------------------------------------------------------
