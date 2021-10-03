@@ -7,8 +7,8 @@ import yaml
 import time
 
 DFF = 2048
-NUM_HEADS = 12
-D_MODEL = 768
+NUM_HEADS = 8
+D_MODEL = 512
 NUM_LAYERS = 4
 DROPOUT_RATE = 0.1
 TARGET_VOCAB_SIZE = 5000 + 1

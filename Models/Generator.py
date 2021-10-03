@@ -110,7 +110,7 @@ class Encoder(tf.keras.layers.Layer):
         self.s_attention = []
         for _ in range(num_layers):
             if _ == 0:
-                self.s_attention.append(SelfAttention(dff, d_model))
+                self.s_attention.append(SelfAttention(dff, d_model, convert_dim=True))
             else:
                 self.s_attention.append(SelfAttention(d_model, d_model))
 
@@ -131,7 +131,7 @@ class Encoder(tf.keras.layers.Layer):
                 _atn_module = self.s_attention[i](inp)
             else:
                 _atn_module = self.s_attention[i](x)
-            _enc_out = self.enc_layers[i](x, training, mask)
+            _enc_out = self.enc_layers[i](x,x,x, training, mask)
             _x = tf.concat([_atn_module, _enc_out], axis=-1)
             _x = tf.reshape(_x, (-1, 8, 8, self.d_model * 2))
             _x = self.conv_net(_x)

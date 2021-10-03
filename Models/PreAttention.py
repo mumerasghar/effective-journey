@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow_addons.layers import SpectralNormalization
 
-
 class ConvBlock(tf.keras.layers.Layer):
     def __init__(self, s):
         super().__init__()
@@ -23,7 +22,7 @@ class ConvBlock(tf.keras.layers.Layer):
 
 
 class PreAttention(tf.keras.layers.Layer):
-    def __init__(self, s, keep_dims=False, rate=0.1):
+    def __init__(self, s, o, rate=0.1):
         super().__init__()
 
         self.block1 = ConvBlock(s)
@@ -36,10 +35,7 @@ class PreAttention(tf.keras.layers.Layer):
 
         self.gamma = tf.Variable(tf.zeros(1), trainable=True)
 
-        if not keep_dims:
-            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s // 2, 1, use_bias=False))
-        else:
-            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s, 1, use_bias=False))
+        self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(o, 1, use_bias=False))
 
     def call(self, x, training=True):
         attn_out = self.block1(x)
@@ -55,21 +51,25 @@ class PreAttention(tf.keras.layers.Layer):
 
 
 class SelfAttention(tf.keras.layers.Layer):
-    def __init__(self, s, rate=0.1, training=True):
+    def __init__(self, s, d_model, convert_dim=False):
         super().__init__()
 
-        self.p_attention1 = PreAttention(s)
-        self.p_attention2 = PreAttention(s // 2)
-        self.p_attention3 = PreAttention(s // 4, keep_dims=True)
-        self.p_attention4 = PreAttention(s // 4, keep_dims=True)
+        self.d_model = d_model
+        if convert_dim:
+            self.dim = 2048
+            self.model = tf.keras.Sequential([
+                PreAttention(s, 1024),
+                PreAttention(1024, self.d_model),
+            ])
+        else:
+            self.dim = d_model
+            self.model = tf.keras.Sequential([
+                PreAttention(self.d_model, self.d_model),
+                PreAttention(self.d_model, self.d_model)
+            ])
 
     def call(self, x):
-        x = tf.reshape(x, (-1, 8, 8, 2048))
-
-        x = self.p_attention1(x)
-        x = self.p_attention2(x)
-        x = self.p_attention3(x)
-        x = self.p_attention4(x)
-
-        x = tf.reshape(x, shape=(-1, 64, 512))
+        x = tf.reshape(x, (-1, 8, 8, self.dim))
+        x = self.model(x)
+        x = tf.reshape(x, shape=(-1, 64, self.d_model))
         return x
