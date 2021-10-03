@@ -62,11 +62,11 @@ def critic_feed_forward(d_model, dff):
 
 
 class Critic(tf.keras.Model):
-    def __init__(self, d_output=1, d_input=512, rate=0.1):
+    def __init__(self, d_model, d_output=1, rate=0.1):
         super(Critic, self).__init__()
 
-        self.mha1 = MultiHeadedAttention(512, 8)
-        self.mha2 = MultiHeadedAttention(512, 2)
+        self.mha1 = MultiHeadedAttention(d_model, 8)
+        self.mha2 = MultiHeadedAttention(d_model, 2)
 
         self.norm1 = SpectralNormalization(
             tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -82,7 +82,7 @@ class Critic(tf.keras.Model):
         self.dropout2 = tf.keras.layers.Dropout(rate)
         self.dropout3 = tf.keras.layers.Dropout(rate)
 
-        self.ffn = critic_feed_forward(d_output, d_input)
+        self.ffn = critic_feed_forward(d_output, d_model)
 
     def call(self, x, training):
         att1, _ = self.mha1(x, x, x)
