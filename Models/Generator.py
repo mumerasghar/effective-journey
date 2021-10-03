@@ -110,7 +110,7 @@ class Encoder(tf.keras.layers.Layer):
         self.s_attention = []
         for _ in range(num_layers):
             if _ == 0:
-                self.s_attention.append(SelfAttention(dff, d_model, convert_dim=True))
+                self.s_attention.append(SelfAttention(dff, d_model))
             else:
                 self.s_attention.append(SelfAttention(d_model, d_model))
 
