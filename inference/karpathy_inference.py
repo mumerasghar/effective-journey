@@ -94,6 +94,6 @@ def karpathy_inference(tokenizer, transformer):
         finallist.append({'image_id': int(i), 'caption': result_join})
 
     jsonString = json.dumps(finallist)
-    jsonFile = open("./karpathy_results.json", "w")
+    jsonFile = open("./captions_val2014_result_results.json", "w")
     jsonFile.write(jsonString)
     jsonFile.close()
