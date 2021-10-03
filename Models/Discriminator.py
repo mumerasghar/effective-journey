@@ -1,7 +1,6 @@
 import tensorflow as tf
 from tensorflow_addons.layers import SpectralNormalization
-from .Generator import Encoder, MultiHeadedAttention
-
+from .MultiHeadAttention import MultiHeadedAttention
 
 # def critic_feed_forward(d_model, dff):
 #     return tf.keras.Sequential(
@@ -48,13 +47,16 @@ from .Generator import Encoder, MultiHeadedAttention
 #         ffn_output = self.ffn(out2)
 #         return ffn_output
 
+xavier = tf.keras.initializers.GlorotNormal()
+kaiming = tf.keras.initializers.HeNormal()
+
 
 def critic_feed_forward(d_model, dff):
     return tf.keras.Sequential(
         [
-            SpectralNormalization(tf.keras.layers.Dense(dff)),
+            SpectralNormalization(tf.keras.layers.Dense(dff, kernel_initializer=kaiming)),
             tf.keras.layers.LeakyReLU(alpha=0.1),
-            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
+            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid", kernel_initializer=xavier)),
         ]
     )
 
