@@ -189,6 +189,8 @@ dataset, i_dataset, tokenizer = create_dataset(cfg)
 if __name__ == '__main__':
     if os.path.isfile('result.txt'):
         with open('result.txt', 'w') as file:
+            file.write('\t\tBASIC GANS\n')
+            file.write('-' * 100 + '\n')
             file.close()
     train(dataset, 30, tokenizer)
 else:
