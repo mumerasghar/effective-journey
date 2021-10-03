@@ -15,7 +15,7 @@ from inference import evaluate
 warnings.filterwarnings("ignore")
 
 image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/J"
+dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
 
 jpgs = os.listdir(image_path)
 print(f"Total image in dataset is {len(jpgs)}")
@@ -118,7 +118,6 @@ def data_limiter(num, total_captions, all_img_name_vector):
     return train_captions, img_name_vector
 
 
-print("data limiter")
 train_captions, img_name_vector = data_limiter(40000, all_captions, all_img_name_vector)
 
 top_k = 5000

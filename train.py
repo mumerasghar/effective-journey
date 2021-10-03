@@ -66,7 +66,7 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
 
 # ###################################### TRAINING FUNCTIONS #########################################
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]

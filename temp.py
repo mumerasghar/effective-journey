@@ -2,6 +2,7 @@ import json
 import os
 import pickle
 import time
+import string
 
 import numpy as np
 import pandas as pd
@@ -12,66 +13,162 @@ from tensorflow_addons.layers import SpectralNormalization
 
 from inference import evaluate
 
-DIR = './Dataset/COCO/extracted/coco_training/'
-CAP_FILE = './Dataset/COCO/captions.pickle'
-IMG_NAME = './Dataset/COCO/img_name.pickle'
-CAPTIONS = './Dataset/COCO/annotations/captions_train2014.json'
+# DIR = './Dataset/COCO/extracted/coco_training/'
+# CAP_FILE = './Dataset/COCO/captions.pickle'
+# IMG_NAME = './Dataset/COCO/img_name.pickle'
+# CAPTIONS = './Dataset/COCO/annotations/captions_train2014.json'
+#
+#
+# def copy_sub_data(a):
+#     _dest = './Dataset/COCO/extracted/coco_training/'
+#     _src = './Dataset/COCO/extracted/train2014/'
+#     import shutil
+#     a = a[0:40000]
+#     _atem = set(a)
+#     for i in _atem:
+#         _img = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(i)))])}{i}"
+#         shutil.copy(f'{_src}{_img}.jpg', _dest)
+#         shutil.copy(f'{_src}{_img}.jpg.npy', _dest)
+#
+#
+# def read_data():
+#     with open(CAPTIONS) as f:
+#         annotations = json.load(f)
+#         annotations = annotations['annotations']
+#
+#     data = []
+#     for item in annotations:
+#         t = (item['image_id'], item['caption'].lower())
+#         data.append(t)
+#
+#     data = pd.DataFrame(data, columns=['filename', 'captions'])
+#
+#     all_captions = []
+#     if os.path.isfile(CAP_FILE):
+#         print("found cached caption.pickle")
+#         with open(CAP_FILE, 'rb') as f:
+#             all_captions = pickle.load(f)
+#     else:
+#         print('formatting captions')
+#         with open(CAP_FILE, 'wb') as f:
+#             for caption in data['captions'].astype(str):
+#                 caption = '<start> ' + caption + ' <end>'
+#                 all_captions.append(caption)
+#             pickle.dump(all_captions, f, protocol=pickle.HIGHEST_PROTOCOL)
+#
+#     all_img_name = []
+#     if os.path.isfile(IMG_NAME):
+#         print('found cached img_name.pickle')
+#         with open(IMG_NAME, 'rb') as f:
+#             all_img_name = pickle.load(f)
+#     else:
+#         with open(IMG_NAME, 'wb') as f:
+#             for f_name in data['filename']:
+#                 c_addr = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(f_name)))])}{f_name}.jpg"
+#                 all_img_name.append(DIR + c_addr)
+#
+#             pickle.dump(all_img_name, f, protocol=pickle.HIGHEST_PROTOCOL)
+#
+#     return all_captions, all_img_name
+#
+#
+# ALL_CAPTIONS, ALL_IMG_NAME = read_data()
+
+# warnings.filterwarnings("ignore")
+
+image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
+dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
+
+jpgs = os.listdir(image_path)
+print(f"Total image in dataset is {len(jpgs)}")
+
+file = open(dir_Flickr_text, "r")
+text = file.read()
+file.close()
+
+datatxt = []
+for line in text.split("\n"):
+    col = line.split("\t")
+    if len(col) == 1:
+        continue
+
+    w = col[0].split("#")
+    datatxt.append(w + [col[1].lower()])
+
+data = pd.DataFrame(datatxt, columns=["filename", "index", "captions"])
+data = data.reindex(columns=["index", "filename", "captions"])
+data = data[data.filename != "2258277193_586949ec62.jpg.1"]
+uni_filenames = np.unique(data.filename.values)
+
+npic = 5
+npix = 224
+target_size = (npix, npix, 3)
+count = 1
+
+vocabulary = []
+for txt in data.captions.values:
+    vocabulary.extend(txt.split())
+
+print(f"Vocublary Size {len(set(vocabulary))}")
 
 
-def copy_sub_data(a):
-    _dest = './Dataset/COCO/extracted/coco_training/'
-    _src = './Dataset/COCO/extracted/train2014/'
-    import shutil
-    a = a[0:40000]
-    _atem = set(a)
-    for i in _atem:
-        _img = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(i)))])}{i}"
-        shutil.copy(f'{_src}{_img}.jpg', _dest)
-        shutil.copy(f'{_src}{_img}.jpg.npy', _dest)
+def remove_punctutation(text_original):
+    text_no_punctuation = text_original.translate(
+        str.maketrans("", "", string.punctuation)
+    )
+    return text_no_punctuation
 
 
-def read_data():
-    with open(CAPTIONS) as f:
-        annotations = json.load(f)
-        annotations = annotations['annotations']
+def remove_single_character(text):
+    text_len_more_than1 = ""
+    for word in text.split():
+        if len(word) > 1:
+            text_len_more_than1 += " " + word
 
-    data = []
-    for item in annotations:
-        t = (item['image_id'], item['caption'].lower())
-        data.append(t)
-
-    data = pd.DataFrame(data, columns=['filename', 'captions'])
-
-    all_captions = []
-    if os.path.isfile(CAP_FILE):
-        print("found cached caption.pickle")
-        with open(CAP_FILE, 'rb') as f:
-            all_captions = pickle.load(f)
-    else:
-        print('formatting captions')
-        with open(CAP_FILE, 'wb') as f:
-            for caption in data['captions'].astype(str):
-                caption = '<start> ' + caption + ' <end>'
-                all_captions.append(caption)
-            pickle.dump(all_captions, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-    all_img_name = []
-    if os.path.isfile(IMG_NAME):
-        print('found cached img_name.pickle')
-        with open(IMG_NAME, 'rb') as f:
-            all_img_name = pickle.load(f)
-    else:
-        with open(IMG_NAME, 'wb') as f:
-            for f_name in data['filename']:
-                c_addr = f"COCO_train2014_{''.join(['0' for i in range(12 - len(str(f_name)))])}{f_name}.jpg"
-                all_img_name.append(DIR + c_addr)
-
-            pickle.dump(all_img_name, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-    return all_captions, all_img_name
+    return text_len_more_than1
 
 
-ALL_CAPTIONS, ALL_IMG_NAME = read_data()
+def remove_numeric(text):
+    text_no_numeric = ""
+
+    for word in text.split():
+        isalpha = word.isalpha()
+
+        if isalpha:
+            text_no_numeric += " " + word
+
+    return text_no_numeric
+
+
+def text_clean(text_original):
+    text = remove_punctutation(text_original)
+    text = remove_single_character(text)
+    text = remove_numeric(text)
+
+    return text
+
+
+for i, caption in enumerate(data.captions.values):
+    newcaption = text_clean(caption)
+    data["captions"].iloc[1] = newcaption
+
+clean_vocab = []
+
+for txt in data.captions.values:
+    clean_vocab.extend(txt.split())
+
+print(len(set(clean_vocab)))
+
+all_captions = []
+
+for caption in data["captions"].astype(str):
+    caption = "<start> " + caption + " <end>"
+    all_captions.append(caption)
+
+all_img_name_vector = []
+for annot in data["filename"]:
+    full_image_path = image_path + annot
+    all_img_name_vector.append(full_image_path)
 
 
 def data_limiter(num, captions, img_name_vector):
@@ -82,7 +179,7 @@ def data_limiter(num, captions, img_name_vector):
 
 
 print('delimiting data')
-train_captions, img_name_vector = data_limiter(40000, ALL_CAPTIONS, ALL_IMG_NAME)
+train_captions, img_name_vector = data_limiter(40000, all_captions, all_img_name_vector)
 
 
 def load_image(image_path):
@@ -350,7 +447,7 @@ class ConvBlock(tf.keras.layers.Layer):
 
 
 class PreAttention(tf.keras.layers.Layer):
-    def __init__(self, s, keep_dims=False, rate=0.1):
+    def __init__(self, s, o, rate=0.1):
         super().__init__()
 
         self.block1 = ConvBlock(s)
@@ -363,10 +460,7 @@ class PreAttention(tf.keras.layers.Layer):
 
         self.gamma = tf.Variable(tf.zeros(1), trainable=True)
 
-        if not keep_dims:
-            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s // 2, 1, use_bias=False))
-        else:
-            self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(s, 1, use_bias=False))
+        self.conv1x1 = SpectralNormalization(tf.keras.layers.Conv2D(o, 1, use_bias=False))
 
     def call(self, x, training=True):
         attn_out = self.block1(x)
@@ -382,26 +476,27 @@ class PreAttention(tf.keras.layers.Layer):
 
 
 class SelfAttention(tf.keras.layers.Layer):
-    def __init__(self, s, convert_dim=False):
+    def __init__(self, s, d_model, convert_dim=False):
         super().__init__()
 
+        self.d_model = d_model
         if convert_dim:
             self.dim = 2048
             self.model = tf.keras.Sequential([
-                PreAttention(s),
-                PreAttention(s // 2),
+                PreAttention(s, 1024),
+                PreAttention(1024, self.d_model),
             ])
         else:
-            self.dim = 512
+            self.dim = d_model
             self.model = tf.keras.Sequential([
-                PreAttention(s // 4, keep_dims=True),
-                PreAttention(s // 4, keep_dims=True)
+                PreAttention(self.d_model, self.d_model),
+                PreAttention(self.d_model, self.d_model)
             ])
 
     def call(self, x):
         x = tf.reshape(x, (-1, 8, 8, self.dim))
         x = self.model(x)
-        x = tf.reshape(x, shape=(-1, 64, 512))
+        x = tf.reshape(x, shape=(-1, 64, self.d_model))
         return x
 
 
@@ -419,9 +514,9 @@ class Encoder(tf.keras.layers.Layer):
         self.s_attention = []
         for _ in range(num_layers):
             if _ == 0:
-                self.s_attention.append(SelfAttention(dff, convert_dim=True))
+                self.s_attention.append(SelfAttention(dff, d_model, convert_dim=True))
             else:
-                self.s_attention.append(SelfAttention(dff))
+                self.s_attention.append(SelfAttention(d_model, d_model))
 
         self.dropout = tf.keras.layers.Dropout(rate)
         # skeptical of being using relu here.
@@ -442,9 +537,9 @@ class Encoder(tf.keras.layers.Layer):
                 _atn_module = self.s_attention[i](x)
             _enc_out = self.enc_layers[i](x, training, mask)
             _x = tf.concat([_atn_module, _enc_out], axis=-1)
-            _x = tf.reshape(_x, (-1, 8, 8, 1024))
+            _x = tf.reshape(_x, (-1, 8, 8, self.d_model * 2))
             _x = self.conv_net(_x)
-            x = tf.reshape(_x, (-1, 64, 512))
+            x = tf.reshape(_x, (-1, 64, self.d_model))
 
         return x
 
@@ -501,9 +596,9 @@ class Transformer(tf.keras.Model):
 
 
 dff = 2048
-d_model = 512
+d_model = 768
 row_size = 8
-num_heads = 8
+num_heads = 12
 col_size = 8
 num_layer = 4
 dropout_rate = 0.1
@@ -641,7 +736,7 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     return loss + g_loss
 
 
-@tf.function
+# @tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
