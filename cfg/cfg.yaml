@@ -12,4 +12,4 @@ FLICKER:
   CAP_FILE: './Dataset/Flicker/captions.pickle'
   IMG_NAME: './Dataset/Flicker/img_name.pickle'
   DATASET_NAME: 'Flicker'
-  BATCH_SIZE: 64
+  BATCH_SIZE: 2
