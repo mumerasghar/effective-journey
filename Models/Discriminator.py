@@ -56,17 +56,17 @@ def critic_feed_forward(d_model, dff):
         [
             SpectralNormalization(tf.keras.layers.Dense(dff, kernel_initializer=kaiming)),
             tf.keras.layers.LeakyReLU(alpha=0.1),
-            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid", kernel_initializer=xavier)),
+            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
         ]
     )
 
 
 class Critic(tf.keras.Model):
-    def __init__(self, d_model, d_output=1, rate=0.1):
+    def __init__(self, d_model, n_heads, d_output=1, rate=0.1):
         super(Critic, self).__init__()
 
-        self.mha1 = MultiHeadedAttention(d_model, 8)
-        self.mha2 = MultiHeadedAttention(d_model, 2)
+        self.mha1 = MultiHeadedAttention(d_model, n_heads)
+        self.mha2 = MultiHeadedAttention(d_model, n_heads)
 
         self.norm1 = SpectralNormalization(
             tf.keras.layers.LayerNormalization(epsilon=1e-6)

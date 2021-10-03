@@ -174,7 +174,7 @@ learning_rate = CustomSchedule(D_MODEL)
 transformer = Transformer(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF, TARGET_VOCAB_SIZE,
                           max_pos_encoding=TARGET_VOCAB_SIZE, rate=DROPOUT_RATE)
 # critic = Critic(NUM_LAYERS, D_MODEL, NUM_HEADS, DFF)
-critic = Critic()
+critic = Critic(D_MODEL, NUM_HEADS)
 
 optimizer_g = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
