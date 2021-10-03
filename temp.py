@@ -579,7 +579,7 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    def __init__(self, num_layers, d_model, num_heads, dff, row_size, col_size, target_vocab_size, max_pos_encoding,
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding,
                  rate=0.1):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
@@ -596,11 +596,9 @@ class Transformer(tf.keras.Model):
 
 
 dff = 2048
-d_model = 768
-row_size = 8
-num_heads = 12
-col_size = 8
+d_model = 512
 num_layer = 4
+num_heads = 8
 dropout_rate = 0.1
 target_vocab_size = 5000 + 1
 
@@ -690,7 +688,7 @@ class Critic(tf.keras.Model):
 train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
-transformer = Transformer(num_layer, d_model, num_heads, dff, row_size, col_size, target_vocab_size,
+transformer = Transformer(num_layer, d_model, num_heads, dff, target_vocab_size,
                           max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
 critic = Critic()

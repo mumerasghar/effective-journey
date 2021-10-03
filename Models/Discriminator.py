@@ -51,12 +51,12 @@ xavier = tf.keras.initializers.GlorotNormal()
 kaiming = tf.keras.initializers.HeNormal()
 
 
-def critic_feed_forward(d_model, dff):
+def critic_feed_forward(d_input, d_output):
     return tf.keras.Sequential(
         [
-            SpectralNormalization(tf.keras.layers.Dense(dff, kernel_initializer=kaiming)),
+            SpectralNormalization(tf.keras.layers.Dense(d_input, kernel_initializer=kaiming)),
             tf.keras.layers.LeakyReLU(alpha=0.1),
-            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
+            SpectralNormalization(tf.keras.layers.Dense(d_output, activation="sigmoid")),
         ]
     )
 
@@ -82,7 +82,7 @@ class Critic(tf.keras.Model):
         self.dropout2 = tf.keras.layers.Dropout(rate)
         self.dropout3 = tf.keras.layers.Dropout(rate)
 
-        self.ffn = critic_feed_forward(d_output, d_model)
+        self.ffn = critic_feed_forward(d_model, d_output)
 
     def call(self, x, training):
         att1, _ = self.mha1(x, x, x)
