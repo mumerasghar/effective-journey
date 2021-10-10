@@ -276,11 +276,10 @@ def dis_loss(f_cap, r_cap):
 
 def gen_loss(tar_real, predictions, f_cap, r_cap):
     loss = loss_function(tar_real, predictions)
-    g_output = critic(f_cap, True)
-    g_loss = criterion(tf.ones_like(g_output), g_output)
-    g_loss = tf.reduce_sum(g_loss)
-
-    return loss + g_loss
+    # g_output = critic(f_cap, True)
+    # g_loss = criterion(tf.ones_like(g_output), g_output)
+    # g_loss = tf.reduce_sum(g_loss)
+    return loss
 
 
 @tf.function
@@ -294,13 +293,13 @@ def train_step(img_tensor, tar):
         predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
 
+        # d_loss = dis_loss(f_cap, tar_real)
+        # d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
+        # optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
+
         loss = gen_loss(tar_real, predictions, f_cap, tar_real)
         gradients = tape.gradient(loss, transformer.trainable_variables)
         optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-
-        d_loss = dis_loss(f_cap, tar_real)
-        d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
-        optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
 
     train_loss(loss)
     train_accuracy(tar_real, predictions)
