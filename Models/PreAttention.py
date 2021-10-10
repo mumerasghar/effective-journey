@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow_addons.layers import SpectralNormalization
 
+
 class ConvBlock(tf.keras.layers.Layer):
     def __init__(self, s):
         super().__init__()

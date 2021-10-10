@@ -6,7 +6,6 @@ import tensorflow as tf
 import numpy as np
 
 
-
 def data_limiter(num, captions, img_name_vector):
     t_cap = captions[:num]
     i_name_vec = img_name_vector[:num]
@@ -14,7 +13,7 @@ def data_limiter(num, captions, img_name_vector):
     return t_cap, i_name_vec
 
 
-def tokenize(all_captions, all_img_name_vector,data_limit=40000):
+def tokenize(all_captions, all_img_name_vector, data_limit=40000):
     train_captions, img_name_vector = data_limiter(data_limit, all_captions, all_img_name_vector)
 
     tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=5000, oov_token='<unk>',
@@ -63,7 +62,8 @@ def create_dataset(cfg):
     # get mapping between images -> captions.
     all_captions, all_img_name_vector = Dataset(**paths)
     # tokenize above data.
-    tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector,cfg['DATASET_SIZE'])
+    tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector,
+                                                                             cfg['DATASET_SIZE'])
     # converting data into train and test set tensors.
     dataset = create_data_tensor(img_name_train, cap_train, batch_size=cfg['BATCH_SIZE'])
     i_data = create_data_tensor(img_name_val, cap_val, batch_size=1)
