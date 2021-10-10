@@ -8,7 +8,7 @@ from data import create_dataset
 from inference import evaluate
 from utils import *
 
-DATASET = 'FLICKER'
+DATASET = 'COCO'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
@@ -421,7 +421,7 @@ train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accu
 transformer = Transformer(num_layer, d_model, num_heads, dff, target_vocab_size,
                           max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
-critic = Critic(num_layer, d_model, num_heads, dff, target_vocab_size,
+critic = Critic(num_layer//2, d_model, num_heads, dff, target_vocab_size,
                 max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
 
@@ -455,7 +455,7 @@ def gen_loss(tar_real, predictions, r_cap, img_tensor):
     return loss + g_loss
 
 
-# @tf.function
+@tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]

@@ -1,15 +1,32 @@
 COCO:
-  IMG_PATH: './Dataset/COCO/extracted/coco_training/'
-  TXT_PATH: './Dataset/COCO/annotations/captions_train2014.json'
-  CAP_FILE: './Dataset/COCO/captions.pickle'
-  IMG_NAME: './Dataset/COCO/img_name.pickle'
-  DATASET_NAME: 'COCO'
-  BATCH_SIZE: 24
+  IMG_PATH: "./Dataset/COCO/extracted/train2014/"
+  TXT_PATH: "./Dataset/COCO/annotations/captions_train2014.json"
+  CAP_FILE: "./Dataset/COCO/captions.pickle"
+  IMG_NAME: "./Dataset/COCO/img_name.pickle"
+  k_INFERENCE: "./Dataset/COCO/extracted/val2014/"
+  DATASET_NAME: "COCO"
+  DATASET_SIZE: 40000
+  BATCH_SIZE: 64
+  EPOCHS: 30
+
+COCO_RCNN:
+  IMG_PATH: "./Dataset/COCO/rcnn_features/train/"
+  TXT_PATH: "./Dataset/COCO/annotations/captions_train2014.json"
+  CAP_FILE: "./Dataset/COCO/captions.pickle"
+  IMG_NAME: "./Dataset/COCO/img_name.pickle"
+  k_INFERENCE: "./Dataset/COCO/rcnn_features/val/"
+  DATASET_NAME: "COCO"
+  DATASET_SIZE: 240000
+  VOCAB_SIZE: 7000
+  BATCH_SIZE: 128
+  EPOCHS: 5
 
 FLICKER:
-  IMG_PATH: './Dataset/Flicker/Flicker8k_Dataset/'
-  TXT_PATH: './Dataset/Flicker/Flickr8k.token.txt'
-  CAP_FILE: './Dataset/Flicker/captions.pickle'
-  IMG_NAME: './Dataset/Flicker/img_name.pickle'
-  DATASET_NAME: 'Flicker'
-  BATCH_SIZE: 2
+  IMG_PATH: "./Dataset/Flicker/Flicker8k_Dataset/"
+  TXT_PATH: "./Dataset/Flicker/Flickr8k.token.txt"
+  CAP_FILE: "./Dataset/Flicker/captions.pickle"
+  IMG_NAME: "./Dataset/Flicker/img_name.pickle"
+  DATASET_NAME: "Flicker"
+  DATASET_SIZE: 100000
+  BATCH_SIZE: 64
+  EPOCHS: 30

@@ -1,237 +1,29 @@
 import os
-import string
 import time
-import warnings
 
-import numpy as np
-import pandas as pd
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
+import yaml
 from tensorflow_addons.layers import SpectralNormalization
 
+from data import create_dataset
 from inference import evaluate
-
-warnings.filterwarnings("ignore")
-
-image_path = "./Dataset/Flicker/Flicker8k_Dataset/"
-dir_Flickr_text = "./Dataset/Flicker/Flickr8k.token.txt"
-
-jpgs = os.listdir(image_path)
-print(f"Total image in dataset is {len(jpgs)}")
-
-file = open(dir_Flickr_text, "r")
-text = file.read()
-file.close()
-
-datatxt = []
-for line in text.split("\n"):
-    col = line.split("\t")
-    if len(col) == 1:
-        continue
-
-    w = col[0].split("#")
-    datatxt.append(w + [col[1].lower()])
-
-data = pd.DataFrame(datatxt, columns=["filename", "index", "captions"])
-data = data.reindex(columns=["index", "filename", "captions"])
-data = data[data.filename != "2258277193_586949ec62.jpg.1"]
-uni_filenames = np.unique(data.filename.values)
-
-npic = 5
-npix = 224
-target_size = (npix, npix, 3)
-count = 1
-
-vocabulary = []
-for txt in data.captions.values:
-    vocabulary.extend(txt.split())
-
-print(f"Vocublary Size {len(set(vocabulary))}")
-
-
-def remove_punctutation(text_original):
-    text_no_punctuation = text_original.translate(
-        str.maketrans("", "", string.punctuation)
-    )
-    return text_no_punctuation
-
-
-def remove_single_character(text):
-    text_len_more_than1 = ""
-    for word in text.split():
-        if len(word) > 1:
-            text_len_more_than1 += " " + word
-
-    return text_len_more_than1
-
-
-def remove_numeric(text):
-    text_no_numeric = ""
-
-    for word in text.split():
-        isalpha = word.isalpha()
-
-        if isalpha:
-            text_no_numeric += " " + word
-
-    return text_no_numeric
-
-
-def text_clean(text_original):
-    text = remove_punctutation(text_original)
-    text = remove_single_character(text)
-    text = remove_numeric(text)
-
-    return text
-
-
-for i, caption in enumerate(data.captions.values):
-    newcaption = text_clean(caption)
-    data["captions"].iloc[1] = newcaption
-
-clean_vocab = []
-
-for txt in data.captions.values:
-    clean_vocab.extend(txt.split())
-
-print(len(set(clean_vocab)))
-
-all_captions = []
-
-for caption in data["captions"].astype(str):
-    caption = "<start> " + caption + " <end>"
-    all_captions.append(caption)
-
-all_img_name_vector = []
-for annot in data["filename"]:
-    full_image_path = image_path + annot
-    all_img_name_vector.append(full_image_path)
-
-
-def data_limiter(num, total_captions, all_img_name_vector):
-    train_captions, img_name_vector = shuffle(
-        total_captions, all_img_name_vector, random_state=1
-    )
-    train_captions = train_captions[:num]
-    img_name_vector = img_name_vector[:num]
-    return train_captions, img_name_vector
-
-
-train_captions, img_name_vector = data_limiter(40000, all_captions, all_img_name_vector)
-
-top_k = 5000
-
-print("tokenizer")
-tokenizer = tf.keras.preprocessing.text.Tokenizer(
-    num_words=top_k, oov_token="<unk>", filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ '
-)
-tokenizer.fit_on_texts(train_captions)
-
-train_seqs = tokenizer.texts_to_sequences(train_captions)
-tokenizer.word_index["<pad>"] = 0
-train_seqs = tokenizer.texts_to_sequences(train_captions)
-cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding="post")
-
-img_name_train, img_name_val, cap_train, cap_val = train_test_split(
-    img_name_vector, cap_vector, test_size=0.2, random_state=0
-)
-
-BATCH_SIZE = 64
-BUFFER_SIZE = 256
-num_steps = len(img_name_train)
-
-
-def map_func(img_name, cap):
-    img_tensor = np.load(img_name.decode("utf-8") + ".npy")
-    return img_tensor, cap
-
-
-print("creating dataste")
-dataset = tf.data.Dataset.from_tensor_slices((img_name_train, cap_train))
-dataset = dataset.map(
-    lambda item1, item2: tf.numpy_function(
-        map_func, [item1, item2], [tf.float32, tf.int32]
-    ),
-    num_parallel_calls=tf.data.experimental.AUTOTUNE,
-)
-dataset = dataset.shuffle(128).batch(BATCH_SIZE)
-dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-
-def v_load_pre_image(image_path):
-    img = tf.io.read_file(image_path)
-    img = tf.image.decode_jpeg(img, channels=3)
-    img = tf.image.resize(img, (64, 64))
-    return img
-
-
-def v_map_func(img_name, cap):
-    img_tensor = np.load(img_name.decode("utf-8") + ".npy")
-    image = v_load_pre_image(img_name.decode("utf-8"))
-    return img_tensor, cap, img_name, image
-
-
-i_data = tf.data.Dataset.from_tensor_slices((img_name_val, cap_val))
-i_data = i_data.map(
-    lambda item1, item2: tf.numpy_function(
-        v_map_func, [item1, item2], [tf.float32, tf.int32, tf.string, tf.float32]
-    ),
-    num_parallel_calls=tf.data.experimental.AUTOTUNE,
-)
-i_data = i_data.shuffle(BUFFER_SIZE).batch(1)
-i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
-
-
-def get_angles(pos, i, d_model):
-    angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
-    return pos * angle_rates
-
-
-def positional_encoding_1d(position, d_model):
-    angle_rads = get_angles(
-        np.arange(position)[:, np.newaxis], np.arange(d_model)[np.newaxis, :], d_model
-    )
-    angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
-    angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
-
-    pos_encoding = angle_rads[np.newaxis, ...]
-    return tf.cast(pos_encoding, dtype=tf.float32)
-
-
-def positional_encoding_2d(row, col, d_model):
-    assert d_model % 2 == 0
-    row_pos = np.repeat(np.arange(row), col)[:, np.newaxis]
-    col_pos = np.repeat(np.expand_dims(np.arange(col), 0), row, axis=0).reshape(-1, 1)
-
-    angle_rads_row = get_angles(
-        row_pos, np.arange(d_model // 2)[np.newaxis, :], d_model // 2
-    )
-    angle_rads_col = get_angles(
-        col_pos, np.arange(d_model // 2)[np.newaxis, :], d_model // 2
-    )
-
-    angle_rads_row[:, 0::2] = np.sin(angle_rads_row[:, 0::2])
-    angle_rads_row[:, 1::2] = np.cos(angle_rads_row[:, 1::2])
-
-    angle_rads_col[:, 0::2] = np.sin(angle_rads_col[:, 0::2])
-    angle_rads_col[:, 1::2] = np.cos(angle_rads_col[:, 1::2])
-
-    pos_encoding = np.concatenate([angle_rads_row, angle_rads_col], axis=1)[
-        np.newaxis, ...
-    ]
-    return tf.cast(pos_encoding, dtype=tf.float32)
-
-
-def create_padding_mask(seq):
-    seq = tf.cast(tf.math.equal(seq, 0), tf.float32)
-    return seq[:, tf.newaxis, tf.newaxis, :]
-
-
-def create_look_ahead_mask(size):
-    mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-    return mask
-
+from inference import karpathy_inference
+
+from utils import *
+
+DATASET = 'COCO_RCNN'
+with open('./cfg/cfg.yaml', 'r') as f:
+    cfg = yaml.load(f)
+    cfg = cfg[DATASET]
+
+paths = {
+    "image_path": cfg['IMG_PATH'],
+    "text_path": cfg["TXT_PATH"],
+    "cap_file": cfg["CAP_FILE"],
+    "img_name": cfg["IMG_NAME"],
+    "dataset": cfg["DATASET_NAME"]
+}
+
+dataset, i_data, tokenizer = create_dataset(cfg)
 
 def scaled_dot_product_attention(q, k, v, mask):
     matmul_qk = tf.matmul(q, k, transpose_b=True)
@@ -508,7 +300,7 @@ class Decoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
 
         self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
-        self.pos_embedding = positional_encoding_1d(maximum_position_encoding, d_model)
+        self.pos_embedding = positional_encoding(maximum_position_encoding, d_model)
 
         self.dec_layers = [
             DecoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
@@ -535,7 +327,7 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    def __init__(self, num_layers, d_model, num_heads, dff, row_size, col_size, target_vocab_size, max_pos_encoding,
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding,
                  rate=0.1):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
@@ -555,10 +347,6 @@ num_layer = 4
 d_model = 512
 dff = 2048
 num_heads = 8
-row_size = 8
-col_size = 8
-# target_vocab_size = top_k + 1
-target_vocab_size = 5000 + 1
 dropout_rate = 0.1
 
 
@@ -635,8 +423,8 @@ class Critic(tf.keras.Model):
 train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
-transformer = Transformer(num_layer, d_model, num_heads, dff, row_size, col_size, target_vocab_size,
-                          max_pos_encoding=target_vocab_size, rate=dropout_rate)
+transformer = Transformer(num_layer, d_model, num_heads, dff, cfg['VOCAB_SIZE'],
+                          max_pos_encoding=cfg['VOCAB_SIZE'], rate=dropout_rate)
 
 critic = Critic()
 
@@ -715,9 +503,8 @@ def train_step(img_tensor, tar):
 
 
 def generate_caption():
-    for img_tensor, cap, img_name, image in i_data.take(1):
+    for img_tensor, cap, img_name in i_data.take(1):
         f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
-        # f_cap, r_cap, name = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
         return names, f_cap, r_cap
 
 
@@ -750,10 +537,10 @@ def main(epochs, o_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar)) in enumerate(dataset):
+        for (batch, (img_tensor, tar,_)) in enumerate(dataset):
             train_step(img_tensor, tar)
 
-            if batch % 50 == 0:
+            if batch % 100 == 0:
                 print(
                     f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
                 )
@@ -782,10 +569,19 @@ def main(epochs, o_break=False):
 
 
 if __name__ == "__main__":
-    main(30, False)
+    with open('result.txt', 'w') as file:
+        file.write('-'*45+" GANS "+"-"*45+'\n')
+        file.write('-'*35+f" DATASET_SIZE: [{cfg['DATASET_SIZE']}]"+"-"*35+'\n')
+        file.write('-'*35+f" VOCAB_SIZE: [{cfg['VOCAB_SIZE']}]"+"-"*35+'\n')
+        file.write('-'*35+f" BATCH_SIZE: [{cfg['BATCH_SIZE']}]"+"-"*35+'\n')
+        file.write('-'*35+f" EPOCHS: [{cfg['EPOCHS']}]"+"-"*35+'\n')
+        file.write('-'*35+f" DATASET_NAME: [{cfg['DATASET_NAME']}]"+"-"*35+'\n')
+        file.write('-' * 100 + '\n')
+    main(cfg['EPOCHS'], False)
+    karpathy_inference(tokenizer, transformer,cfg)
 
 else:
     from inference import karpathy_inference
 
     checkpoint_manager()
-    karpathy_inference(tokenizer, transformer)
+    karpathy_inference(tokenizer, transformer,cfg)
