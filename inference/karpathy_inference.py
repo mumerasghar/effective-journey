@@ -9,6 +9,7 @@ from sklearn.utils import shuffle
 results = {}
 dict2 = dict()
 
+
 def read_file(path):
     karpathy_test = './Dataset/COCO/splits/finalkarpathysplit_test.json'
 
@@ -16,8 +17,8 @@ def read_file(path):
     dict1 = json.load(f)
 
     for keys in dict1:
-        *_,_t = keys['dir'].split('/')
-        dict2[keys['image_id']] = path+_t
+        *_, _t = keys['dir'].split('/')
+        dict2[keys['image_id']] = path + _t
 
 
 def append_to_list(id, name):
@@ -34,7 +35,7 @@ def append_to_list(id, name):
 def i_map_func(img_name):
     a = dict2.get(img_name)
     # a = a.split('.')
-    img_tensor = np.load(a+'.npy')
+    img_tensor = np.load(a + '.npy')
     return img_tensor, img_name
 
 
@@ -75,7 +76,7 @@ def evaluate(image, names, tokenize, transformer, show=True):
         output = tf.concat([output, predicted_id], axis=-1)
 
 
-def karpathy_inference(tokenizer, transformer,cfg):
+def karpathy_inference(tokenizer, transformer, cfg):
     read_file(cfg['k_INFERENCE'])
     l = (dict2.keys())
     l = list(set(l))

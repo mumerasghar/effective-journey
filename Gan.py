@@ -8,10 +8,11 @@ from data import create_dataset
 from inference import evaluate
 from inference import karpathy_inference
 from Models import MultiHeadedAttention
+from Models import SelfAttention
 
 from utils import *
 
-DATASET = 'COCO_RCNN'
+DATASET = 'FLICKER'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
@@ -32,7 +33,7 @@ class EncoderLayer(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads, dff, rate=0.1):
         super().__init__()
         self.mha = MultiHeadedAttention(d_model, num_heads)
-        # self.ffn = point_wise_feed_forward_network(d_model, dff)
+        self.ffn = point_wise_feed_forward_network(d_model, dff)
 
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -46,9 +47,9 @@ class EncoderLayer(tf.keras.layers.Layer):
 
         out1 = self.layernorm1(x + attn_output)
 
-        # ffn_output = self.ffn(out1)
-        # ffn_output = self.dropout2(ffn_output, training=training)
-        # out2 = self.layernorm2(out1 + ffn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        out1 = self.layernorm2(out1 + ffn_output)
 
         return out1
 
@@ -94,19 +95,37 @@ class Encoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
 
         self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
+        self.embedding1 = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.enc_layers = [
             EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
         ]
 
         self.dropout = tf.keras.layers.Dropout(rate)
+        self.dropout1 = tf.keras.layers.Dropout(rate)
 
-    def call(self, x, training, mask=None):
+        self.conv_net = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(d_model * 2, (3, 3), padding='same', activation='relu'),
+            tf.keras.layers.Conv2D(d_model, (3, 3), padding='same', activation='relu')
+        ])
+
+        self.s_attention = []
+        for _ in range(num_layers):
+            self.s_attention.append(SelfAttention(d_model, d_model))
+
+    def call(self, x, img_rcnn, training, mask=None):
         x = self.embedding(x)
         x = self.dropout(x, training=training)
 
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, training, mask)
 
+        y = self.embedding1(img_rcnn)
+        y = self.dropout1(y)
+
+        for i in range(self.num_layers):
+            y = self.s_attention[i](y)
+
+        _x = tf.concat([x, y], axis=1)
         return x
 
 
@@ -149,13 +168,12 @@ class Transformer(tf.keras.Model):
                  rate=0.1):
         super().__init__()
         self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
-        # self.encoder = SelfAttention(2048)
         self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate, )
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None, ):
-        enc_output = self.encoder(inp, training, enc_padding_mask)
-        # enc_output = self.encoder(inp)
+    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None,
+             img_rcnn=None):
+        enc_output = self.encoder(inp, img_rcnn, training, enc_padding_mask)
         dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
         return final_output, attention_weights
@@ -276,26 +294,26 @@ def dis_loss(f_cap, r_cap):
 
 def gen_loss(tar_real, predictions, f_cap, r_cap):
     loss = loss_function(tar_real, predictions)
-    # g_output = critic(f_cap, True)
-    # g_loss = criterion(tf.ones_like(g_output), g_output)
-    # g_loss = tf.reduce_sum(g_loss)
+    g_output = critic(f_cap, True)
+    g_loss = criterion(tf.ones_like(g_output), g_output)
+    g_loss = tf.reduce_sum(g_loss)
     return loss
 
 
 @tf.function
-def train_step(img_tensor, tar):
+def train_step(img_tensor, tar, img_rcnn):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
     dec_mask = create_masks_decoder(tar_inp)
 
     with tf.GradientTape() as tape, tf.GradientTape() as d_tape:
-        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
+        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask, img_rcnn=img_rcnn)
         f_cap = tf.argmax(predictions, axis=-1)
 
-        # d_loss = dis_loss(f_cap, tar_real)
-        # d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
-        # optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
+        d_loss = dis_loss(f_cap, tar_real)
+        d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
+        optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
 
         loss = gen_loss(tar_real, predictions, f_cap, tar_real)
         gradients = tape.gradient(loss, transformer.trainable_variables)
@@ -340,8 +358,8 @@ def main(epochs, o_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar, _)) in enumerate(dataset):
-            train_step(img_tensor, tar)
+        for (batch, (img_tensor, tar, _, img_rcnn)) in enumerate(dataset):
+            train_step(img_tensor, tar, img_rcnn)
 
             if batch % 100 == 0:
                 print(
@@ -381,7 +399,5 @@ if __name__ == "__main__":
     karpathy_inference(tokenizer, transformer, cfg)
 
 else:
-    from inference import karpathy_inference
-
     checkpoint_manager()
     karpathy_inference(tokenizer, transformer, cfg)

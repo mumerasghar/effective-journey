@@ -24,7 +24,7 @@ COCO_RCNN:
   NUM_HEADS: 8
   D_MODEL: 512
   DFF: 2048
-  EPOCHS: 5
+  EPOCHS: 30
 
 FLICKER:
   IMG_PATH: "./Dataset/Flicker/Flicker8k_Dataset/"
@@ -32,6 +32,12 @@ FLICKER:
   CAP_FILE: "./Dataset/Flicker/captions.pickle"
   IMG_NAME: "./Dataset/Flicker/img_name.pickle"
   DATASET_NAME: "Flicker"
-  DATASET_SIZE: 100000
-  BATCH_SIZE: 64
-  EPOCHS: 30
+  DATASET_SIZE: 40000
+  VOCAB_SIZE: 5000
+  BATCH_SIZE: 2
+  NUM_LAYERS: 4
+  DROP_RATE: 0.1
+  NUM_HEADS: 8
+  D_MODEL: 512
+  DFF: 2048
+  EPOCHS: 5

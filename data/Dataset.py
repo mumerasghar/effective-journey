@@ -33,14 +33,14 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
 
 def map_func(img_name, cap):
     img_tensor = np.load(img_name.decode('utf-8') + '.npy')
-    return img_tensor, cap, img_name
+    return img_tensor, cap, img_name, tf.random.uniform(shape=(36, 2048))
 
 
 def create_data_tensor(img_name, cap_name, batch_size=64):
     dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name))
     dataset = dataset.map(
         lambda item1, item2: tf.numpy_function(
-            map_func, [item1, item2], [tf.float32, tf.int32, tf.string]
+            map_func, [item1, item2], [tf.float32, tf.int32, tf.string, tf.float32]
         ),
         num_parallel_calls=tf.data.experimental.AUTOTUNE,
     )

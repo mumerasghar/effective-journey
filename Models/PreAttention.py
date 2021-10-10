@@ -70,7 +70,8 @@ class SelfAttention(tf.keras.layers.Layer):
             ])
 
     def call(self, x):
-        x = tf.reshape(x, (-1, 8, 8, self.dim))
+        s = int(x.shape[1] ** (1 / 2))
+        x = tf.reshape(x, (-1, s, s, self.dim))
         x = self.model(x)
-        x = tf.reshape(x, shape=(-1, 64, self.d_model))
+        x = tf.reshape(x, shape=(-1, s * s, self.d_model))
         return x
