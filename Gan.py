@@ -103,11 +103,6 @@ class Encoder(tf.keras.layers.Layer):
         self.dropout = tf.keras.layers.Dropout(rate)
         self.dropout1 = tf.keras.layers.Dropout(rate)
 
-        self.conv_net = tf.keras.Sequential([
-            tf.keras.layers.Conv2D(d_model * 2, (3, 3), padding='same', activation='relu'),
-            tf.keras.layers.Conv2D(d_model, (3, 3), padding='same', activation='relu')
-        ])
-
         self.s_attention = []
         for _ in range(num_layers):
             self.s_attention.append(SelfAttention(d_model, d_model))

@@ -31,16 +31,17 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
     return tokenizer, (img_name_train, img_name_val, cap_train, cap_val)
 
 
-def map_func(img_name, cap):
+def map_func(img_name, cap, full_img):
     img_tensor = np.load(img_name.decode('utf-8') + '.npy')
-    return img_tensor, cap, img_name, tf.random.uniform(shape=(36, 2048))
+    full_img = np.load(full_img.decode('utf-8') + '.npy')
+    return img_tensor, cap, img_name, full_img
 
 
-def create_data_tensor(img_name, cap_name, batch_size=64):
-    dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name))
+def create_data_tensor(img_name, cap_name, full_img, batch_size=64):
+    dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name, full_img))
     dataset = dataset.map(
-        lambda item1, item2: tf.numpy_function(
-            map_func, [item1, item2], [tf.float32, tf.int32, tf.string, tf.float32]
+        lambda item1, item2, item3: tf.numpy_function(
+            map_func, [item1, item2, item3], [tf.float32, tf.int32, tf.string, tf.float32]
         ),
         num_parallel_calls=tf.data.experimental.AUTOTUNE,
     )
@@ -48,6 +49,15 @@ def create_data_tensor(img_name, cap_name, batch_size=64):
     dataset = dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
     return dataset
+
+
+def full_feature_path(path, img_name):
+    full_img_path = []
+    for i in img_name:
+        *_, img = i.split('/')
+        full_img_path.append(path + img)
+
+    return full_img_path
 
 
 def create_dataset(cfg):
@@ -64,8 +74,12 @@ def create_dataset(cfg):
     # tokenize above data.
     tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector,
                                                                              cfg['DATASET_SIZE'])
+
+    full_img_name_train = full_feature_path(cfg['F_IMG_PATH'], img_name_train)
+    full_img_name_val = full_feature_path(cfg['F_K_INFERENCE'], img_name_val)
+
     # converting data into train and test set tensors.
-    dataset = create_data_tensor(img_name_train, cap_train, batch_size=cfg['BATCH_SIZE'])
-    i_data = create_data_tensor(img_name_val, cap_val, batch_size=1)
+    dataset = create_data_tensor(img_name_train, cap_train, full_img_name_train, batch_size=cfg['BATCH_SIZE'])
+    i_data = create_data_tensor(img_name_val, cap_val, full_img_name_val, batch_size=1)
 
     return dataset, i_data, tokenizer
