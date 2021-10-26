@@ -8,10 +8,11 @@ from sklearn.utils import shuffle
 
 results = {}
 dict2 = dict()
+FULL_PATH = "./Dataset/COCO/extracted/val2014/"
 
 
 def read_file(path):
-    karpathy_test = './Dataset/COCO/splits/finalkarpathysplit_test.json'
+    karpathy_test = '../Dataset/COCO/splits/finalkarpathysplit_test.json'
 
     f = open(karpathy_test)
     dict1 = json.load(f)
@@ -34,9 +35,10 @@ def append_to_list(id, name):
 
 def i_map_func(img_name):
     a = dict2.get(img_name)
-    # a = a.split('.')
+    *_, temp = a.split('/')
+    f_img_tensor = np.load(f'{FULL_PATH}{temp}.npy')
     img_tensor = np.load(a + '.npy')
-    return img_tensor, img_name
+    return img_tensor, img_name, f_img_tensor
 
 
 def create_padding_mask(seq):
@@ -56,7 +58,7 @@ def create_masks_decoder(tar):
     return combined_mask
 
 
-def evaluate(image, names, tokenize, transformer, show=True):
+def evaluate(image, names, tokenize, transformer, show=True, img_rcnn=None):
     global tokenizer
     tokenizer = tokenize
     start_token = tokenizer.word_index['<start>']
@@ -67,7 +69,7 @@ def evaluate(image, names, tokenize, transformer, show=True):
 
     for i in range(40):
         dec_mask = create_masks_decoder(output)
-        predictions, attention_weights = transformer(image, output, False, dec_mask)
+        predictions, attention_weights = transformer(image, output, False, dec_mask, img_rcnn=img_rcnn)
         predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
         predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
         if tf.reduce_all(tf.math.equal(predicted_id, end_token)):
@@ -82,14 +84,14 @@ def karpathy_inference(tokenizer, transformer, cfg):
     l = list(set(l))
 
     i_data = tf.data.Dataset.from_tensor_slices(l)
-    i_data = i_data.map(lambda item1: tf.numpy_function(i_map_func, [item1], [tf.float32, tf.int32]),
+    i_data = i_data.map(lambda item1: tf.numpy_function(i_map_func, [item1], [tf.float32, tf.int32, tf.float32]),
                         num_parallel_calls=tf.data.experimental.AUTOTUNE)
     i_data = i_data.batch(64)
     i_data = i_data.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
-    for batch_idx, (image, names) in enumerate(i_data):
+    for batch_idx, (image, names, full_features) in enumerate(i_data):
         print(f'Karpathy split inference : {batch_idx}')
-        evaluate(image, names, tokenizer, transformer)
+        evaluate(image, names, tokenizer, transformer, img_rcnn=full_features)
 
     finallist = []
     for i in results.keys():
@@ -102,3 +104,13 @@ def karpathy_inference(tokenizer, transformer, cfg):
     jsonFile = open("./captions_val2014_result_results.json", "w")
     jsonFile.write(jsonString)
     jsonFile.close()
+
+
+if __name__ == '__main__':
+    import yaml
+
+    DATASET = 'COCO_RCNN'
+    with open('../cfg/cfg.yaml', 'r') as f:
+        cfg = yaml.load(f)
+        cfg = cfg[DATASET]
+    karpathy_inference(None, None, cfg)

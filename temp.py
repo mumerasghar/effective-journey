@@ -9,7 +9,7 @@ from data import create_dataset
 from inference import evaluate
 from utils import *
 
-DATASET = 'COCO'
+DATASET = 'COCO_RCNN'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
@@ -343,11 +343,29 @@ def loss_function(real, pred):
 train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
-transformer = Transformer(num_layer, d_model, num_heads, dff, target_vocab_size,
-                          max_pos_encoding=target_vocab_size, rate=dropout_rate)
 
-critic = Critic(num_layer // 2, d_model, num_heads, dff, target_vocab_size,
-                max_pos_encoding=target_vocab_size, rate=dropout_rate)
+params = {
+    "num_layers": cfg['NUM_LAYERS'],
+    "d_model": cfg['D_MODEL'],
+    "num_heads": cfg['NUM_HEADS'],
+    "dff": cfg['DFF'],
+    "target_vocab_size": cfg['VOCAB_SIZE'],
+    "max_pos_encoding": cfg['VOCAB_SIZE'],
+    "rate": cfg['DROP_RATE']
+}
+
+transformer = Transformer(**params)
+
+params_c = {
+    "num_layers": cfg['NUM_LAYERS']//2,
+    "d_model": cfg['D_MODEL'],
+    "num_heads": cfg['NUM_HEADS'],
+    "dff": cfg['DFF'],
+    "target_vocab_size": cfg['VOCAB_SIZE'],
+    "max_pos_encoding": cfg['VOCAB_SIZE'],
+    "rate": cfg['DROP_RATE']
+}
+critic = Critic(**params_c)
 
 
 def create_masks_decoder(tar):
@@ -369,10 +387,10 @@ def dis_loss(f_cap, r_cap, img_tensor):
     return r_d_loss + f_d_loss
 
 
-def gen_loss(tar_real, predictions, r_cap, img_tensor):
+def gen_loss(tar_real, predictions, r_cap,f_cap, img_tensor):
     loss = loss_function(tar_real, predictions)
 
-    g_output = critic(img_tensor, r_cap)
+    g_output = critic(img_tensor, f_cap)
 
     g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
@@ -391,7 +409,7 @@ def train_step(img_tensor, tar):
         predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
 
-        loss = gen_loss(tar_real, predictions, tar_real, img_tensor)
+        loss = gen_loss(tar_real, predictions, tar_real, f_cap,img_tensor)
         gradients = tape.gradient(loss, transformer.trainable_variables)
         optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
 
@@ -419,7 +437,7 @@ def checkpoint_manager():
         critic=critic,
     )
 
-    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=1)
+    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=30)
 
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)

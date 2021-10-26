@@ -12,7 +12,7 @@ from Models import SelfAttention
 
 from utils import *
 
-DATASET = 'FLICKER'
+DATASET = 'COCO_RCNN'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
@@ -93,7 +93,9 @@ class Encoder(tf.keras.layers.Layer):
         super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
-
+        
+        self.mha = MultiHeadedAttention(d_model, num_heads)
+        
         self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.embedding1 = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.enc_layers = [
@@ -103,24 +105,18 @@ class Encoder(tf.keras.layers.Layer):
         self.dropout = tf.keras.layers.Dropout(rate)
         self.dropout1 = tf.keras.layers.Dropout(rate)
 
-        self.s_attention = []
-        for _ in range(num_layers):
-            self.s_attention.append(SelfAttention(d_model, d_model))
+    def call(self, x, f_features, training, mask=None):
 
-    def call(self, x, img_rcnn, training, mask=None):
         x = self.embedding(x)
         x = self.dropout(x, training=training)
+        
+        # y = self.embedding1(f_features)
+        # y = self.dropout1(y,training=training)
 
+        # x = tf.concat([x,y],axis=1)
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, training, mask)
 
-        y = self.embedding1(img_rcnn)
-        y = self.dropout1(y)
-
-        for i in range(self.num_layers):
-            y = self.s_attention[i](y)
-
-        _x = tf.concat([x, y], axis=1)
         return x
 
 
@@ -202,7 +198,7 @@ class Critic(tf.keras.Model):
         super(Critic, self).__init__()
 
         self.mha1 = MultiHeadedAttention(512, 8)
-        self.mha2 = MultiHeadedAttention(512, 2)
+        self.mha2 = MultiHeadedAttention(512, 8)
 
         self.norm1 = SpectralNormalization(
             tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -220,7 +216,7 @@ class Critic(tf.keras.Model):
 
         self.ffn = critic_feed_forward(d_output, d_input)
 
-    def call(self, x, training):
+    def call(self, x, training=True):
         att1, _ = self.mha1(x, x, x)
         out1 = self.dropout1(att1, training=training)
         # out1 = self.norm1(att1 + x)
@@ -230,8 +226,9 @@ class Critic(tf.keras.Model):
         # out2 = self.norm2(att2 + x)
 
         ffn_output = self.ffn(out2)
+        ffn_output = self.dropout3(ffn_output,training=training)
+        # ffn_output = self.norm3(ffn_output+out2)
         return ffn_output
-        # ffn_output = self.dropout3(training=training)
 
 
 learning_rate = CustomSchedule(cfg['D_MODEL'])
@@ -246,8 +243,8 @@ train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
 params = {
-    "num_layers": cfg['NUM_LAYERS'],
-    "d_model": cfg['D_MODEL'],
+    "num_layers":cfg['NUM_LAYERS'],
+    "d_model":cfg['D_MODEL'],
     "num_heads": cfg['NUM_HEADS'],
     "dff": cfg['DFF'],
     "target_vocab_size": cfg['VOCAB_SIZE'],
@@ -276,11 +273,11 @@ def loss_function(real, pred):
 
 
 def dis_loss(f_cap, r_cap):
-    r_output = critic(r_cap, True)
+    r_output = critic(r_cap)
     r_d_loss = criterion(tf.ones_like(r_output), r_output)
     r_d_loss = tf.reduce_sum(r_d_loss)
 
-    f_output = critic(f_cap, True)
+    f_output = critic(f_cap)
     f_d_loss = criterion(tf.zeros_like(f_output), f_output)
     f_d_loss = tf.reduce_sum(f_d_loss)
 
@@ -289,7 +286,7 @@ def dis_loss(f_cap, r_cap):
 
 def gen_loss(tar_real, predictions, f_cap, r_cap):
     loss = loss_function(tar_real, predictions)
-    g_output = critic(f_cap, True)
+    g_output = critic(f_cap)
     g_loss = criterion(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
     return loss
@@ -320,7 +317,8 @@ def train_step(img_tensor, tar, img_rcnn):
 
 def generate_caption():
     for img_tensor, cap, img_name in i_data.take(1):
-        f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, show=False)
+        f_cap, r_cap, names = evaluate(img_tensor, img_name, cap, tokenizer, transformer, img_rcnn=None,
+                                       show=False)
         return names, f_cap, r_cap
 
 
@@ -353,8 +351,8 @@ def main(epochs, o_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_tensor, tar, _, img_rcnn)) in enumerate(dataset):
-            train_step(img_tensor, tar, img_rcnn)
+        for (batch, (img_rcnn, tar, _)) in enumerate(dataset):
+            train_step(img_rcnn, tar, None)
 
             if batch % 100 == 0:
                 print(
@@ -363,7 +361,6 @@ def main(epochs, o_break=False):
 
             if o_break:
                 return
-
         log_time = f"Time taken for 1 epoch : {time.time() - start} secs"
         log_accuracy = f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
 

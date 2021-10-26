@@ -18,15 +18,15 @@ COCO_RCNN:
   k_INFERENCE: "./Dataset/COCO/rcnn_features/val/"
   F_K_INFERENCE: "./Dataset/COCO/extracted/val2014/"
   DATASET_NAME: "COCO"
-  DATASET_SIZE: 240000
+  DATASET_SIZE: 400000
   VOCAB_SIZE: 7000
-  BATCH_SIZE: 128
+  BATCH_SIZE: 64
   NUM_LAYERS: 4
   DROP_RATE: 0.1
   NUM_HEADS: 8
   D_MODEL: 512
   DFF: 2048
-  EPOCHS: 30
+  EPOCHS: 1
 
 FLICKER:
   IMG_PATH: "./Dataset/Flicker/Flicker8k_Dataset/"

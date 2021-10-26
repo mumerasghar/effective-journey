@@ -25,7 +25,7 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
     train_seqs = tokenizer.texts_to_sequences(train_captions)
     cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding='post')
 
-    img_name_train, img_name_val, cap_train, cap_val = train_test_split(img_name_vector, cap_vector, test_size=0.2,
+    img_name_train, img_name_val, cap_train, cap_val = train_test_split(img_name_vector, cap_vector, test_size=0.1,
                                                                         random_state=0)
 
     return tokenizer, (img_name_train, img_name_val, cap_train, cap_val)
@@ -33,15 +33,15 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
 
 def map_func(img_name, cap, full_img):
     img_tensor = np.load(img_name.decode('utf-8') + '.npy')
-    full_img = np.load(full_img.decode('utf-8') + '.npy')
-    return img_tensor, cap, img_name, full_img
+    # full_img = np.load(full_img.decode('utf-8') + '.npy')
+    return img_tensor, cap, img_name
 
 
 def create_data_tensor(img_name, cap_name, full_img, batch_size=64):
     dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name, full_img))
     dataset = dataset.map(
         lambda item1, item2, item3: tf.numpy_function(
-            map_func, [item1, item2, item3], [tf.float32, tf.int32, tf.string, tf.float32]
+            map_func, [item1, item2, item3], [tf.float32, tf.int32, tf.string]
         ),
         num_parallel_calls=tf.data.experimental.AUTOTUNE,
     )
@@ -76,7 +76,7 @@ def create_dataset(cfg):
                                                                              cfg['DATASET_SIZE'])
 
     full_img_name_train = full_feature_path(cfg['F_IMG_PATH'], img_name_train)
-    full_img_name_val = full_feature_path(cfg['F_K_INFERENCE'], img_name_val)
+    full_img_name_val = full_feature_path(cfg['F_IMG_PATH'], img_name_val)
 
     # converting data into train and test set tensors.
     dataset = create_data_tensor(img_name_train, cap_train, full_img_name_train, batch_size=cfg['BATCH_SIZE'])
