@@ -2,6 +2,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from .ProcessData import Dataset
 
+from evaluation import Cider
 import tensorflow as tf
 import numpy as np
 
@@ -18,10 +19,12 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
 
     tokenizer = tf.keras.preprocessing.text.Tokenizer(num_words=5000, oov_token='<unk>',
                                                       filters='!"#$%&()*+.,-/:;=?@[\]^_`{|}~ ')
+
     tokenizer.fit_on_texts(train_captions)
 
     train_seqs = tokenizer.texts_to_sequences(train_captions)
     tokenizer.word_index['<pad>'] = 0
+    tokenizer.index_word[0] = '<pad>'
     train_seqs = tokenizer.texts_to_sequences(train_captions)
     cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding='post')
 
@@ -31,17 +34,17 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
     return tokenizer, (img_name_train, img_name_val, cap_train, cap_val)
 
 
-def map_func(img_name, cap, full_img):
+def map_func(img_name, cap):
     img_tensor = np.load(img_name.decode('utf-8') + '.npy')
     # full_img = np.load(full_img.decode('utf-8') + '.npy')
     return img_tensor, cap, img_name
 
 
-def create_data_tensor(img_name, cap_name, full_img, batch_size=64):
-    dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name, full_img))
+def create_data_tensor(img_name, cap_name, batch_size=64):
+    dataset = tf.data.Dataset.from_tensor_slices((img_name, cap_name))
     dataset = dataset.map(
-        lambda item1, item2, item3: tf.numpy_function(
-            map_func, [item1, item2, item3], [tf.float32, tf.int32, tf.string]
+        lambda item1, item2: tf.numpy_function(
+            map_func, [item1, item2], [tf.float32, tf.int32, tf.string]
         ),
         num_parallel_calls=tf.data.experimental.AUTOTUNE,
     )
@@ -71,15 +74,20 @@ def create_dataset(cfg):
 
     # get mapping between images -> captions.
     all_captions, all_img_name_vector = Dataset(**paths)
+
+    # creating cider
+    _tmp = dict(zip(all_img_name_vector, all_captions))
+    cider = Cider(_tmp)
+
     # tokenize above data.
     tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector,
                                                                              cfg['DATASET_SIZE'])
 
-    full_img_name_train = full_feature_path(cfg['F_IMG_PATH'], img_name_train)
-    full_img_name_val = full_feature_path(cfg['F_IMG_PATH'], img_name_val)
+    # full_img_name_train = full_feature_path(cfg['F_IMG_PATH'], img_name_train)
+    # full_img_name_val = full_feature_path(cfg['F_IMG_PATH'], img_name_val)
 
     # converting data into train and test set tensors.
-    dataset = create_data_tensor(img_name_train, cap_train, full_img_name_train, batch_size=cfg['BATCH_SIZE'])
-    i_data = create_data_tensor(img_name_val, cap_val, full_img_name_val, batch_size=1)
+    dataset = create_data_tensor(img_name_train, cap_train, batch_size=cfg['BATCH_SIZE'])
+    i_data = create_data_tensor(img_name_val, cap_val, batch_size=1)
 
-    return dataset, i_data, tokenizer
+    return dataset, i_data, tokenizer, cider

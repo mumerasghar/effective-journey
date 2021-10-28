@@ -9,15 +9,14 @@ from inference import evaluate
 from inference import karpathy_inference
 from Models import MultiHeadedAttention
 from Models import SelfAttention
-
 from utils import *
 
-DATASET = 'COCO_RCNN'
+DATASET = 'FLICKER'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
 
-dataset, i_data, tokenizer = create_dataset(cfg)
+dataset, i_data, tokenizer, cider = create_dataset(cfg)
 
 
 def point_wise_feed_forward_network(d_model, dff):
@@ -93,9 +92,9 @@ class Encoder(tf.keras.layers.Layer):
         super().__init__()
         self.d_model = d_model
         self.num_layers = num_layers
-        
+
         self.mha = MultiHeadedAttention(d_model, num_heads)
-        
+
         self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.embedding1 = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.enc_layers = [
@@ -106,18 +105,18 @@ class Encoder(tf.keras.layers.Layer):
         self.dropout1 = tf.keras.layers.Dropout(rate)
 
     def call(self, x, f_features, training, mask=None):
-
         x = self.embedding(x)
         x = self.dropout(x, training=training)
-        
+        mesh = []
         # y = self.embedding1(f_features)
         # y = self.dropout1(y,training=training)
 
         # x = tf.concat([x,y],axis=1)
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, training, mask)
+            mesh.append(x)
 
-        return x
+        return mesh
 
 
 class Decoder(tf.keras.layers.Layer):
@@ -146,7 +145,7 @@ class Decoder(tf.keras.layers.Layer):
 
         for i in range(self.num_layers):
             x, block1, block2 = self.dec_layers[i](
-                x, enc_output, training, look_ahead_mask, padding_mask
+                x, enc_output[i], training, look_ahead_mask, padding_mask
             )
             attention_weights[f"decoder_layer{i + 1}_block1"] = block1
             attention_weights[f"decoder_layer{i + 2}_block2"] = block2
@@ -226,7 +225,7 @@ class Critic(tf.keras.Model):
         # out2 = self.norm2(att2 + x)
 
         ffn_output = self.ffn(out2)
-        ffn_output = self.dropout3(ffn_output,training=training)
+        ffn_output = self.dropout3(ffn_output, training=training)
         # ffn_output = self.norm3(ffn_output+out2)
         return ffn_output
 
@@ -243,8 +242,8 @@ train_loss = tf.keras.metrics.Mean(name="train_loss")
 train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
 
 params = {
-    "num_layers":cfg['NUM_LAYERS'],
-    "d_model":cfg['D_MODEL'],
+    "num_layers": cfg['NUM_LAYERS'],
+    "d_model": cfg['D_MODEL'],
     "num_heads": cfg['NUM_HEADS'],
     "dff": cfg['DFF'],
     "target_vocab_size": cfg['VOCAB_SIZE'],
@@ -292,17 +291,38 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
     return loss
 
 
-@tf.function
-def train_step(img_tensor, tar, img_rcnn):
+def append_to_list(id, name):
+    cap = ""
+    for i in name:
+        if i == 0:
+            break
+        cap += f"{tokenizer.index_word[i]} "
+
+    return cap.rstrip()
+
+
+# @tf.function
+def train_step(img_tensor, tar, img_name):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
     dec_mask = create_masks_decoder(tar_inp)
 
     with tf.GradientTape() as tape, tf.GradientTape() as d_tape:
-        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask, img_rcnn=img_rcnn)
+        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask, img_rcnn=None)
         f_cap = tf.argmax(predictions, axis=-1)
 
+        _img_name = img_name.numpy()
+        _f_cap = f_cap.numpy()
+        _tar_inp = tar_real.numpy()
+
+        fake = list(map(append_to_list, _img_name, _f_cap))
+        real = list(map(append_to_list, _img_name, _tar_inp))
+
+        a = cider.compute_score(dict(zip(_img_name, real))
+                                , dict(zip(_img_name, fake)))[1].astype(np.float32)
+
+        print(a)
         d_loss = dis_loss(f_cap, tar_real)
         d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
         optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
@@ -351,8 +371,8 @@ def main(epochs, o_break=False):
         train_loss.reset_states()
         train_accuracy.reset_states()
 
-        for (batch, (img_rcnn, tar, _)) in enumerate(dataset):
-            train_step(img_rcnn, tar, None)
+        for (batch, (img_rcnn, tar, img_name)) in enumerate(dataset):
+            train_step(img_rcnn, tar, img_name)
 
             if batch % 100 == 0:
                 print(
@@ -387,6 +407,7 @@ if __name__ == "__main__":
         file.write('-' * 35 + f" EPOCHS: [{cfg['EPOCHS']}]" + "-" * 35 + '\n')
         file.write('-' * 35 + f" DATASET_NAME: [{cfg['DATASET_NAME']}]" + "-" * 35 + '\n')
         file.write('-' * 100 + '\n')
+
     main(cfg['EPOCHS'], False)
     karpathy_inference(tokenizer, transformer, cfg)
 
