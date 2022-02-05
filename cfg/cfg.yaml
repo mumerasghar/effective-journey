@@ -43,3 +43,19 @@ FLICKER:
   D_MODEL: 512
   DFF: 2048
   EPOCHS: 5
+
+NLMCXR:
+  IMG_PATH: "./Dataset/NLMCXR/NLMCXR_png/"
+  TXT_PATH: "./Dataset/NLMCXR/NLMCXR_reports/"
+  CAP_FILE: "./Dataset/NLMCXR/captions.pickle"
+  IMG_NAME: "./Dataset/NLMCXR/img_name.pickle"
+  DATASET_NAME: "NLMCXR"
+  DATASET_SIZE: 3400
+  VOCAB_SIZE: 2000
+  BATCH_SIZE: 2
+  NUM_LAYERS: 4
+  DROP_RATE: 0.1
+  NUM_HEADS: 8
+  D_MODEL: 512
+  DFF: 2048
+  EPOCHS: 5

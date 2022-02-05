@@ -105,7 +105,7 @@ def checkpoint():
         i2T_discriminator=critic)
 
     ckpt_manager = tf.train.CheckpointManager(
-        checkpoint, checkpoint_dir, max_to_keep=1)
+        checkpoint, checkpoint_dir, max_to_keep=1)  
 
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)

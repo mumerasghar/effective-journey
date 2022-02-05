@@ -3,6 +3,8 @@ from sklearn.model_selection import train_test_split
 from .ProcessData import Dataset
 
 from evaluation import Cider
+from evaluation import PTBTokenizer
+
 import tensorflow as tf
 import numpy as np
 
@@ -25,6 +27,7 @@ def tokenize(all_captions, all_img_name_vector, data_limit=40000):
     train_seqs = tokenizer.texts_to_sequences(train_captions)
     tokenizer.word_index['<pad>'] = 0
     tokenizer.index_word[0] = '<pad>'
+
     train_seqs = tokenizer.texts_to_sequences(train_captions)
     cap_vector = tf.keras.preprocessing.sequence.pad_sequences(train_seqs, padding='post')
 
@@ -76,8 +79,7 @@ def create_dataset(cfg):
     all_captions, all_img_name_vector = Dataset(**paths)
 
     # creating cider
-    _tmp = dict(zip(all_img_name_vector, all_captions))
-    cider = Cider(_tmp)
+    cider = Cider(PTBTokenizer.tokenize(all_captions))
 
     # tokenize above data.
     tokenizer, (img_name_train, img_name_val, cap_train, cap_val) = tokenize(all_captions, all_img_name_vector,
@@ -90,4 +92,4 @@ def create_dataset(cfg):
     dataset = create_data_tensor(img_name_train, cap_train, batch_size=cfg['BATCH_SIZE'])
     i_data = create_data_tensor(img_name_val, cap_val, batch_size=1)
 
-    return dataset, i_data, tokenizer, cider
+    return dataset, i_data, tokenizer

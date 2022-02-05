@@ -9,7 +9,7 @@ from data import create_dataset
 from inference import evaluate
 from utils import *
 
-DATASET = 'COCO_RCNN'
+DATASET = 'NLMCXR'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
@@ -232,7 +232,7 @@ class Transformer(tf.keras.Model):
         self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate)
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
 
-    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None, ):
+    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
         enc_output = self.encoder(inp, training, enc_padding_mask)
         dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
         final_output = self.final_layer(dec_output)
@@ -253,12 +253,12 @@ class Critic(tf.keras.Model):
         return out
 
 
-dff = 2048
-d_model = 512
-num_layer = 4
-num_heads = 8
-dropout_rate = 0.1
-target_vocab_size = 5000 + 1
+dff = cfg['DFF']
+d_model = cfg['D_MODEL']
+num_layer = cfg['NUM_LAYERS']
+num_heads = cfg['NUM_HEADS']
+dropout_rate = cfg['DROP_RATE']
+target_vocab_size = cfg['VOCAB_SIZE']
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):

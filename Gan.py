@@ -9,6 +9,10 @@ from inference import evaluate
 from inference import karpathy_inference
 from Models import MultiHeadedAttention
 from Models import SelfAttention
+
+import evaluation
+import multiprocessing
+
 from utils import *
 
 DATASET = 'FLICKER'
@@ -292,17 +296,20 @@ def gen_loss(tar_real, predictions, f_cap, r_cap):
 
 
 def append_to_list(id, name):
-    cap = ""
+    cap = []
     for i in name:
         if i == 0:
             break
-        cap += f"{tokenizer.index_word[i]} "
+        cap.append(tokenizer.index_word[i])
 
-    return cap.rstrip()
+    return ' '.join(cap)
+
+
+tokenizer_pool = multiprocessing.Pool()
 
 
 # @tf.function
-def train_step(img_tensor, tar, img_name):
+def train_step(img_tensor, tar, img_name, cider_opt=False):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
@@ -319,10 +326,14 @@ def train_step(img_tensor, tar, img_name):
         fake = list(map(append_to_list, _img_name, _f_cap))
         real = list(map(append_to_list, _img_name, _tar_inp))
 
-        a = cider.compute_score(dict(zip(_img_name, real))
-                                , dict(zip(_img_name, fake)))[1].astype(np.float32)
+        caps_gen, caps_gt = tokenizer_pool.map(evaluation.PTBTokenizer.tokenize, [real, fake])
+        reward = cider.compute_score(caps_gt, caps_gen)[1].astype(np.float32)
 
-        print(a)
+        avg_reward = tf.reduce_mean(reward, -1)
+
+        loss = reward - avg_reward
+        loss = tf.reduce_mean(loss, -1)
+
         d_loss = dis_loss(f_cap, tar_real)
         d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
         optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))

@@ -2,6 +2,7 @@
 # from .meteor import Meteor
 # from .rouge import Rouge
 from .cider import Cider
+from .tokenizer import PTBTokenizer
 
 
 # from .tokenizer import PTBTokenizer

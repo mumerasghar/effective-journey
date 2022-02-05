@@ -12,6 +12,7 @@ import os
 import subprocess
 import tempfile
 
+
 class PTBTokenizer(object):
     """Python wrapper of Stanford PTBTokenizer"""
 
@@ -22,12 +23,12 @@ class PTBTokenizer(object):
     @classmethod
     def tokenize(cls, corpus):
         cmd = ['java', '-cp', cls.corenlp_jar, \
-                'edu.stanford.nlp.process.PTBTokenizer', \
-                '-preserveLines', '-lowerCase']
+               'edu.stanford.nlp.process.PTBTokenizer', \
+               '-preserveLines', '-lowerCase']
 
         if isinstance(corpus, list) or isinstance(corpus, tuple):
             if isinstance(corpus[0], list) or isinstance(corpus[0], tuple):
-                corpus = {i:c for i, c in enumerate(corpus)}
+                corpus = {i: c for i, c in enumerate(corpus)}
             else:
                 corpus = {i: [c, ] for i, c in enumerate(corpus)}
 
@@ -37,7 +38,7 @@ class PTBTokenizer(object):
         sentences = '\n'.join([c.replace('\n', ' ') for k, v in corpus.items() for c in v])
 
         # save sentences to temporary file
-        path_to_jar_dirname=os.path.dirname(os.path.abspath(__file__))
+        path_to_jar_dirname = os.path.dirname(os.path.abspath(__file__))
         tmp_file = tempfile.NamedTemporaryFile(delete=False, dir=path_to_jar_dirname)
         tmp_file.write(sentences.encode())
         tmp_file.close()
@@ -45,7 +46,7 @@ class PTBTokenizer(object):
         # tokenize sentence
         cmd.append(os.path.basename(tmp_file.name))
         p_tokenizer = subprocess.Popen(cmd, cwd=path_to_jar_dirname, \
-                stdout=subprocess.PIPE, stderr=open(os.devnull, 'w'))
+                                       stdout=subprocess.PIPE, stderr=open(os.devnull, 'w'))
         token_lines = p_tokenizer.communicate(input=sentences.rstrip())[0]
         token_lines = token_lines.decode()
         lines = token_lines.split('\n')

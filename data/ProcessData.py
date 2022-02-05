@@ -5,24 +5,87 @@ import pandas as pd
 import pickle5 as pickle
 
 
-class Flicker8K:
+def remove_numeric(text):
+    text_no_numeric = ''
+    for word in text.split():
+        isalpha = word.isalpha()
+        if isalpha:
+            text_no_numeric += ' ' + word
+    return text_no_numeric
+
+
+def remove_single_character(text):
+    text_len_more_than1 = ''
+    for word in text.split():
+        if len(word) > 1:
+            text_len_more_than1 += ' ' + word
+
+    return text_len_more_than1
+
+
+def remove_punctuation(text_original):
+    text_no_punctuation = text_original.translate(str.maketrans('', '', string.punctuation))
+    return text_no_punctuation
+
+
+def text_clean(text_original):
+    text = remove_punctuation(text_original)
+    text = remove_single_character(text)
+    text = remove_numeric(text)
+
+    return text
+
+
+def split_text(text):
+    data_txt = []
+    for line in text.split('\n'):
+        col = line.split('\t')
+        if len(col) == 1:
+            continue
+        w = col[0].split('#')
+        data_txt.append(w + [col[1].lower()])
+
+    return data_txt
+
+
+class NLMCXR:
     def __init__(self, img_pth, txt_pth, cap_file, img_name):
         self.img_pth = img_pth
         self.txt_pth = txt_pth
         self.cap_file = cap_file
         self.img_name = img_name
 
+    def create_df(self):
+        from bs4 import BeautifulSoup
+
+        List = []
+
+        for i in os.listdir("./NLMCXR_reports/"):
+            with open("./NLMCXR_reports/" + i, 'r') as f:
+                data = f.read()
+
+            bs_data = BeautifulSoup(data, "xml")
+            abstract = bs_data.find_all("Abstract")[0]
+            findings = abstract.find_all("AbstractText", Label="FINDINGS")[0].text
+
+            parents = bs_data.find_all('parentImage')
+            for j in parents:
+                image_name = j['id'] + '.png'
+                t = (image_name, 0, findings)
+                if (len(findings) == 0):
+                    print("none")
+                else:
+                    List.append(t)
+
+        df = pd.DataFrame(List, columns=['filename', 'index', 'captions'])
+        return df
+
     def pre_process(self):
 
         jpgs = os.listdir(self.img_pth)
         print(f'  [+] Total image in dataset is {len(jpgs)}.')
 
-        with open(self.txt_pth, 'r') as file:
-            text = file.read()
-
-        s_text = self.split_text(text)
-
-        df = pd.DataFrame(s_text, columns=['filename', 'index', 'captions'])
+        df = self.create_df()
         df = df.reindex(columns=['index', 'filename', 'captions'])
         df = df[df.filename != '2258277193_586949ec62.jpg.1']
 
@@ -33,7 +96,7 @@ class Flicker8K:
         print(f'  [+] Vocabulary Size {len(set(vocabulary))}.')
 
         for i, cap in enumerate(df.captions.values):
-            new_cap = self.text_clean(cap)
+            new_cap = text_clean(cap)
             df['captions'].iloc[1] = new_cap
 
         return df
@@ -60,48 +123,61 @@ class Flicker8K:
 
         return all_caps, img_name
 
-    @staticmethod
-    def remove_numeric(text):
-        text_no_numeric = ''
-        for word in text.split():
-            isalpha = word.isalpha()
-            if isalpha:
-                text_no_numeric += ' ' + word
-        return text_no_numeric
 
-    @staticmethod
-    def remove_single_character(text):
-        text_len_more_than1 = ''
-        for word in text.split():
-            if len(word) > 1:
-                text_len_more_than1 += ' ' + word
+class Flicker8K:
+    def __init__(self, img_pth, txt_pth, cap_file, img_name):
+        self.img_pth = img_pth
+        self.txt_pth = txt_pth
+        self.cap_file = cap_file
+        self.img_name = img_name
 
-        return text_len_more_than1
+    def pre_process(self):
 
-    @staticmethod
-    def remove_punctuation(text_original):
-        text_no_punctuation = text_original.translate(str.maketrans('', '', string.punctuation))
-        return text_no_punctuation
+        jpgs = os.listdir(self.img_pth)
+        print(f'  [+] Total image in dataset is {len(jpgs)}.')
 
-    @staticmethod
-    def text_clean(text_original):
-        text = Flicker8K.remove_punctuation(text_original)
-        text = Flicker8K.remove_single_character(text)
-        text = Flicker8K.remove_numeric(text)
+        with open(self.txt_pth, 'r') as file:
+            text = file.read()
 
-        return text
+        s_text = split_text(text)
 
-    @staticmethod
-    def split_text(text):
-        data_txt = []
-        for line in text.split('\n'):
-            col = line.split('\t')
-            if len(col) == 1:
-                continue
-            w = col[0].split('#')
-            data_txt.append(w + [col[1].lower()])
+        df = pd.DataFrame(s_text, columns=['filename', 'index', 'captions'])
+        df = df.reindex(columns=['index', 'filename', 'captions'])
+        df = df[df.filename != '2258277193_586949ec62.jpg.1']
 
-        return data_txt
+        vocabulary = []
+        for txt in df.captions.values:
+            vocabulary.extend(txt.split())
+
+        print(f'  [+] Vocabulary Size {len(set(vocabulary))}.')
+
+        for i, cap in enumerate(df.captions.values):
+            new_cap = text_clean(cap)
+            df['captions'].iloc[1] = new_cap
+
+        return df
+
+    def get_data(self):
+
+        all_caps = []
+        img_name = []
+
+        data = self.pre_process()
+        with open(self.cap_file, 'wb') as file:
+            for caption in data['captions'].astype(str):
+                caption = '<start> ' + caption + ' <end>'
+                all_caps.append(caption)
+
+            pickle.dump(all_caps, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open(self.img_name, 'wb') as file:
+            for ann in data['filename']:
+                full_image_path = self.img_pth + ann
+                img_name.append(full_image_path)
+
+            pickle.dump(img_name, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+        return all_caps, img_name
 
 
 class COCO:
@@ -166,6 +242,8 @@ class COCO:
 def Dataset(image_path, text_path, cap_file, img_name, dataset):
     if dataset == 'COCO':
         f_data = COCO(image_path, text_path, cap_file, img_name)
+    elif dataset == 'NLMCXR':
+        f_data = NLMCXR(image_path, text_path, cap_file, img_name)
     else:
         f_data = Flicker8K(image_path, text_path, cap_file, img_name)
 
