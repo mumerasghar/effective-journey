@@ -60,8 +60,8 @@ class NLMCXR:
 
         List = []
 
-        for i in os.listdir("./NLMCXR_reports/"):
-            with open("./NLMCXR_reports/" + i, 'r') as f:
+        for i in os.listdir("/home/umer/Documents/Dataset/NLMCXR/NLMCXR_reports/"):
+            with open("/home/umer/Documents/Dataset/NLMCXR/NLMCXR_reports/" + i, 'r') as f:
                 data = f.read()
 
             bs_data = BeautifulSoup(data, "xml")
@@ -85,7 +85,8 @@ class NLMCXR:
         jpgs = os.listdir(self.img_pth)
         print(f'  [+] Total image in dataset is {len(jpgs)}.')
 
-        df = self.create_df()
+        #df = self.create_df()
+        df = pd.read_pickle('./Dataset/NLMCXR/medical.pkl')
         df = df.reindex(columns=['index', 'filename', 'captions'])
         df = df[df.filename != '2258277193_586949ec62.jpg.1']
 

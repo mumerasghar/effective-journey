@@ -15,12 +15,12 @@ import multiprocessing
 
 from utils import *
 
-DATASET = 'FLICKER'
+DATASET = 'COCO'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg = cfg[DATASET]
 
-dataset, i_data, tokenizer, cider = create_dataset(cfg)
+dataset, i_data, tokenizer = create_dataset(cfg)
 
 
 def point_wise_feed_forward_network(d_model, dff):
@@ -52,9 +52,9 @@ class EncoderLayer(tf.keras.layers.Layer):
 
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
-        out1 = self.layernorm2(out1 + ffn_output)
+        out2 = self.layernorm2(out1 + ffn_output)
 
-        return out1
+        return out2
 
 
 class DecoderLayer(tf.keras.layers.Layer):
@@ -97,46 +97,46 @@ class Encoder(tf.keras.layers.Layer):
         self.d_model = d_model
         self.num_layers = num_layers
 
-        self.mha = MultiHeadedAttention(d_model, num_heads)
+        self.embedding = tf.keras.layers.Dense(
+            self.d_model, activation="relu", kernel_initializer="glorot_uniform"
+        )
+        # self.pos_encoding = positional_encoding_2d(8, 8, self.d_model)
 
-        self.embedding = (tf.keras.layers.Dense(self.d_model, activation="relu"))
-        self.embedding1 = (tf.keras.layers.Dense(self.d_model, activation="relu"))
         self.enc_layers = [
             EncoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
         ]
-
         self.dropout = tf.keras.layers.Dropout(rate)
-        self.dropout1 = tf.keras.layers.Dropout(rate)
 
-    def call(self, x, f_features, training, mask=None):
+    def call(self, x, training, mask=None):
+        seq_len = tf.shape(x)[1]
         x = self.embedding(x)
+        # x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
-        mesh = []
-        # y = self.embedding1(f_features)
-        # y = self.dropout1(y,training=training)
 
-        # x = tf.concat([x,y],axis=1)
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, training, mask)
-            mesh.append(x)
 
-        return mesh
+        return x
 
 
 class Decoder(tf.keras.layers.Layer):
-    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, maximum_position_encoding, rate=0.1, ):
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, maximum_position_encoding, rate=0.1,):
         super().__init__()
 
         self.d_model = d_model
         self.num_layers = num_layers
 
         self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
-        self.pos_embedding = positional_encoding(maximum_position_encoding, d_model)
+        self.pos_embedding = positional_encoding(
+            maximum_position_encoding, d_model)
 
         self.dec_layers = [
             DecoderLayer(d_model, num_heads, dff, rate) for _ in range(num_layers)
         ]
         self.dropout = tf.keras.layers.Dropout(rate)
+
+    def get_embedding_layer(self):
+        return self.embedding
 
     def call(self, x, enc_output, training, look_ahead_mask=None, padding_mask=None):
         seq_len = tf.shape(x)[1]
@@ -149,7 +149,7 @@ class Decoder(tf.keras.layers.Layer):
 
         for i in range(self.num_layers):
             x, block1, block2 = self.dec_layers[i](
-                x, enc_output[i], training, look_ahead_mask, padding_mask
+                x, enc_output, training, look_ahead_mask, padding_mask
             )
             attention_weights[f"decoder_layer{i + 1}_block1"] = block1
             attention_weights[f"decoder_layer{i + 2}_block2"] = block2
@@ -158,17 +158,27 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding,
-                 rate=0.1):
+    def __init__(self, num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate=0.1):
         super().__init__()
-        self.encoder = Encoder(num_layers, d_model, num_heads, dff, rate)
-        self.decoder = Decoder(num_layers, d_model, num_heads, dff, target_vocab_size, max_pos_encoding, rate, )
-        self.final_layer = tf.keras.layers.Dense(target_vocab_size)
+        self.encoder = Encoder(
+            num_layers, d_model, num_heads, dff, rate
+        )
+        self.decoder = Decoder(
+            num_layers, d_model, num_heads,
+            dff, target_vocab_size, max_pos_encoding, rate
+        )
+        self.final_layer = tf.keras.layers.Dense(
+            target_vocab_size, kernel_initializer="glorot_uniform"
+        )
 
-    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None,
-             img_rcnn=None):
-        enc_output = self.encoder(inp, img_rcnn, training, enc_padding_mask)
-        dec_output, attention_weights = self.decoder(tar, enc_output, training, look_ahead_mask, dec_padding_mask)
+    def get_embedding_layer(self):
+        return self.decoder.get_embedding_layer()
+
+    def call(self, inp, tar, training, look_ahead_mask=None, dec_padding_mask=None, enc_padding_mask=None):
+        enc_output = self.encoder(inp, training, enc_padding_mask)
+        dec_output, attention_weights = self.decoder(
+            tar, enc_output, training, look_ahead_mask, dec_padding_mask
+        )
         final_output = self.final_layer(dec_output)
         return final_output, attention_weights
 
@@ -191,15 +201,18 @@ def critic_feed_forward(d_model, dff):
         [
             SpectralNormalization(tf.keras.layers.Dense(dff)),
             tf.keras.layers.LeakyReLU(alpha=0.1),
-            SpectralNormalization(tf.keras.layers.Dense(d_model, activation="sigmoid")),
+            SpectralNormalization(tf.keras.layers.Dense(
+                d_model, activation="sigmoid")),
         ]
     )
 
 
 class Critic(tf.keras.Model):
-    def __init__(self, d_output=1, d_input=512, rate=0.1):
+    def __init__(self, target_vocab_size, d_model, d_output=1, d_input=512, rate=0.1):
         super(Critic, self).__init__()
 
+        self.embedding = tf.keras.layers.Embedding(target_vocab_size, d_model)
+        self.emb = tf.keras.layers.Dense(d_model)
         self.mha1 = MultiHeadedAttention(512, 8)
         self.mha2 = MultiHeadedAttention(512, 8)
 
@@ -220,43 +233,21 @@ class Critic(tf.keras.Model):
         self.ffn = critic_feed_forward(d_output, d_input)
 
     def call(self, x, training=True):
+        _x = self.embedding(x)
+        x = self.emb(x)
         att1, _ = self.mha1(x, x, x)
         out1 = self.dropout1(att1, training=training)
-        # out1 = self.norm1(att1 + x)
+        out1 = self.norm1(att1 + x)
 
         att2, _ = self.mha2(out1, out1, x)
         out2 = self.dropout2(att2, training=training)
-        # out2 = self.norm2(att2 + x)
+        out2 = self.norm2(att2 + x)
 
         ffn_output = self.ffn(out2)
         ffn_output = self.dropout3(ffn_output, training=training)
         # ffn_output = self.norm3(ffn_output+out2)
+
         return ffn_output
-
-
-learning_rate = CustomSchedule(cfg['D_MODEL'])
-optimizer = tf.keras.optimizers.Adam(0.0001, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-    from_logits=True, reduction="none"
-)
-criterion = tf.keras.losses.BinaryCrossentropy()
-optimizer_c = tf.keras.optimizers.Adam(0.0004, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-
-train_loss = tf.keras.metrics.Mean(name="train_loss")
-train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name="train_accuracy")
-
-params = {
-    "num_layers": cfg['NUM_LAYERS'],
-    "d_model": cfg['D_MODEL'],
-    "num_heads": cfg['NUM_HEADS'],
-    "dff": cfg['DFF'],
-    "target_vocab_size": cfg['VOCAB_SIZE'],
-    "max_pos_encoding": cfg['VOCAB_SIZE'],
-    "rate": cfg['DROP_RATE']
-}
-
-transformer = Transformer(**params)
-critic = Critic()
 
 
 def create_masks_decoder(tar):
@@ -307,40 +298,60 @@ def append_to_list(id, name):
 
 tokenizer_pool = multiprocessing.Pool()
 
+learning_rate = CustomSchedule(cfg['D_MODEL'])
+optimizer = tf.keras.optimizers.Adam(
+    0.0001, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+
+optimizer_c = tf.keras.optimizers.Adam(
+    0.0004, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+
+loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
+    from_logits=True, reduction="none"
+)
+
+
+criterion = tf.keras.losses.BinaryCrossentropy()
+train_loss = tf.keras.metrics.Mean(name="train_loss")
+
+train_accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(
+    name="train_accuracy")
+
+params = {
+    "num_layers": cfg['NUM_LAYERS'],
+    "d_model": cfg['D_MODEL'],
+    "num_heads": cfg['NUM_HEADS'],
+    "dff": cfg['DFF'],
+    "target_vocab_size": cfg['VOCAB_SIZE'],
+    "max_pos_encoding": cfg['VOCAB_SIZE'],
+    "rate": cfg['DROP_RATE']
+}
+
+transformer = Transformer(**params)
+critic = Critic(cfg['VOCAB_SIZE'], cfg['D_MODEL'])
+
 
 # @tf.function
-def train_step(img_tensor, tar, img_name, cider_opt=False):
+def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
 
     dec_mask = create_masks_decoder(tar_inp)
 
     with tf.GradientTape() as tape, tf.GradientTape() as d_tape:
-        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask, img_rcnn=None)
+        # predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
+        predictions, _ = transformer(img_tensor, tar_inp, True, dec_mask)
         f_cap = tf.argmax(predictions, axis=-1)
 
-        _img_name = img_name.numpy()
-        _f_cap = f_cap.numpy()
-        _tar_inp = tar_real.numpy()
-
-        fake = list(map(append_to_list, _img_name, _f_cap))
-        real = list(map(append_to_list, _img_name, _tar_inp))
-
-        caps_gen, caps_gt = tokenizer_pool.map(evaluation.PTBTokenizer.tokenize, [real, fake])
-        reward = cider.compute_score(caps_gt, caps_gen)[1].astype(np.float32)
-
-        avg_reward = tf.reduce_mean(reward, -1)
-
-        loss = reward - avg_reward
-        loss = tf.reduce_mean(loss, -1)
-
-        d_loss = dis_loss(f_cap, tar_real)
-        d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
-        optimizer_c.apply_gradients(zip(d_gradients, critic.trainable_variables))
-
         loss = gen_loss(tar_real, predictions, f_cap, tar_real)
+        d_loss = dis_loss(f_cap, tar_real)
+
+        d_gradients = d_tape.gradient(d_loss, critic.trainable_variables)
+        optimizer_c.apply_gradients(
+            zip(d_gradients, critic.trainable_variables))
+
         gradients = tape.gradient(loss, transformer.trainable_variables)
-        optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
+        optimizer.apply_gradients(
+            zip(gradients, transformer.trainable_variables))
 
     train_loss(loss)
     train_accuracy(tar_real, predictions)
@@ -363,7 +374,8 @@ def checkpoint_manager():
         critic=critic,
     )
 
-    ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=1)
+    ckpt_manager = tf.train.CheckpointManager(
+        checkpoint, checkpoint_dir, max_to_keep=1)
 
     if ckpt_manager.latest_checkpoint:
         checkpoint.restore(ckpt_manager.latest_checkpoint)
@@ -383,7 +395,7 @@ def main(epochs, o_break=False):
         train_accuracy.reset_states()
 
         for (batch, (img_rcnn, tar, img_name)) in enumerate(dataset):
-            train_step(img_rcnn, tar, img_name)
+            train_step(img_rcnn, tar)
 
             if batch % 100 == 0:
                 print(
@@ -404,7 +416,8 @@ def main(epochs, o_break=False):
 
         ckpt_save_path = ckpt_manager.save()
 
-        print('Saving checkpoint for epoch {} at {}'.format(epoch + 1, ckpt_save_path))
+        print('Saving checkpoint for epoch {} at {}'.format(
+            epoch + 1, ckpt_save_path))
         print(f'{log_accuracy}')
         print(f'{log_time}\n')
 
@@ -412,14 +425,18 @@ def main(epochs, o_break=False):
 if __name__ == "__main__":
     with open('result.txt', 'w') as file:
         file.write('-' * 45 + " GANS " + "-" * 45 + '\n')
-        file.write('-' * 35 + f" DATASET_SIZE: [{cfg['DATASET_SIZE']}]" + "-" * 35 + '\n')
-        file.write('-' * 35 + f" VOCAB_SIZE: [{cfg['VOCAB_SIZE']}]" + "-" * 35 + '\n')
-        file.write('-' * 35 + f" BATCH_SIZE: [{cfg['BATCH_SIZE']}]" + "-" * 35 + '\n')
+        file.write(
+            '-' * 35 + f" DATASET_SIZE: [{cfg['DATASET_SIZE']}]" + "-" * 35 + '\n')
+        file.write(
+            '-' * 35 + f" VOCAB_SIZE: [{cfg['VOCAB_SIZE']}]" + "-" * 35 + '\n')
+        file.write(
+            '-' * 35 + f" BATCH_SIZE: [{cfg['BATCH_SIZE']}]" + "-" * 35 + '\n')
         file.write('-' * 35 + f" EPOCHS: [{cfg['EPOCHS']}]" + "-" * 35 + '\n')
-        file.write('-' * 35 + f" DATASET_NAME: [{cfg['DATASET_NAME']}]" + "-" * 35 + '\n')
+        file.write(
+            '-' * 35 + f" DATASET_NAME: [{cfg['DATASET_NAME']}]" + "-" * 35 + '\n')
         file.write('-' * 100 + '\n')
 
-    main(cfg['EPOCHS'], False)
+    # main(cfg['EPOCHS'], False)
     karpathy_inference(tokenizer, transformer, cfg)
 
 else:

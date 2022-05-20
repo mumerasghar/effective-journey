@@ -9,3 +9,5 @@ COCO/*
 weights/*
 pre_trained_weights/*
 tuple.dump
+captions_val2014_result_results.json
+medical_imagery_dataset/*

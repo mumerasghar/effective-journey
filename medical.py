@@ -1,4 +1,3 @@
-import pickle5 as pickle
 import os
 import time
 import yaml
@@ -11,7 +10,7 @@ from data import create_dataset
 from inference import evaluate
 from utils import *
 
-DATASET = 'COCO_RCNN'
+DATASET = 'NLMCXR'
 with open('./cfg/cfg.yaml', 'r') as f:
     cfg = yaml.load(f)
     cfg1 = cfg.copy()
@@ -310,15 +309,16 @@ def dis_loss(f_cap, r_cap, img_tensor):
 
 def gen_loss(tar_real, predictions, r_cap, f_cap, img_tensor):
     loss = loss_function(tar_real, predictions)
+
     g_output = critic(img_tensor, f_cap)
 
     g_loss = loss_mse(tf.ones_like(g_output), g_output)
     g_loss = tf.reduce_sum(g_loss)
 
-    return loss + g_loss, loss
+    return loss + g_loss
 
 
-@tf.function
+# @tf.function
 def train_step(img_tensor, tar):
     tar_inp = tar[:, :-1]
     tar_real = tar[:, 1:]
@@ -330,8 +330,7 @@ def train_step(img_tensor, tar):
 
         f_cap = tf.argmax(predictions, axis=-1)
 
-        loss, o_loss = gen_loss(tar_real, predictions,
-                                tar_real, f_cap, img_tensor)
+        loss = gen_loss(tar_real, predictions, tar_real, f_cap, img_tensor)
         gradients = tape.gradient(loss, transformer.trainable_variables)
         optimizer.apply_gradients(
             zip(gradients, transformer.trainable_variables))
@@ -343,7 +342,6 @@ def train_step(img_tensor, tar):
 
     train_loss(loss)
     train_accuracy(tar_real, predictions)
-    return o_loss
 
 
 def generate_caption():
@@ -353,8 +351,7 @@ def generate_caption():
         return names, f_cap, r_cap
 
 
-def checkpoint_manager():
-    checkpoint_dir = "checkpoints"
+def checkpoint_manager(checkpoint_dir='checkpoints'):
     checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
     checkpoint = tf.train.Checkpoint(
         opt_transformer=optimizer,
@@ -386,7 +383,7 @@ def initialize_model():
         transformer1(img_tensor, tar_inp, True, dec_mask)
 
 
-def main(epochs, o_break=False, transfer_learning=False):
+def main(epochs, o_break=False, transfer_learning=True):
     global transformer
     global transformer1
 
@@ -394,7 +391,7 @@ def main(epochs, o_break=False, transfer_learning=False):
 
     initialize_model()
     ckpt_manager = checkpoint_manager()
-    loss = []
+
     if transfer_learning:
 
         pre_trained_encoder_weights = transformer.layers[0].get_weights()
@@ -414,18 +411,16 @@ def main(epochs, o_break=False, transfer_learning=False):
         train_accuracy.reset_states()
 
         for (batch, (img_tensor, tar, img_name)) in enumerate(dataset):
-            org_loss = train_step(img_tensor, tar)
+            train_step(img_tensor, tar)
 
             if batch % 50 == 0:
                 print(
                     f"Epoch {epoch + 1}, Batch {batch}, Loss {train_loss.result()}, Accuracy {train_accuracy.result():.4f}"
                 )
-            
+
             if o_break:
                 return
 
-        loss.append((epoch, org_loss, train_accuracy.result()))
-        
         if o_break:
             return
 
@@ -444,10 +439,19 @@ def main(epochs, o_break=False, transfer_learning=False):
 
             print('Saving checkpoint for epoch {} at {}'.format(
                 epoch + 1, ckpt_save_path))
+
         print(f'{log_accuracy}')
         print(f'{log_time}\n')
 
-    np.save('features.npy', np.array(loss))
+    if transfer_learning:
+        ckpt_manager = checkpoint_manager(
+            checkpoint_dir='medical_imagery_dataset'
+        )
+        ckpt_save_path = ckpt_manager.save()
+        print(
+            f'Medical imagery checkpoint saved => epoch: {epoch+1} path: {ckpt_save_path}'
+        )
+
 
 # def critic_feed_forward(d_model, dff):
 #     return tf.keras.Sequential(
@@ -494,8 +498,6 @@ def main(epochs, o_break=False, transfer_learning=False):
 #         ffn_output = self.ffn(out2)
 #         ffn_output = self.dropout3(ffn_output, training=training)
 #         return ffn_output
-
-
 learning_rate = CustomSchedule(cfg['D_MODEL'])
 
 optimizer = tf.keras.optimizers.Adam(
@@ -549,6 +551,15 @@ params_c = {
 critic = Critic(**params_c)
 
 if __name__ == "__main__":
+
+    # if cfg['TRANSFER_LEARNING']:
+    #     for img_tensor, cap, img_name in i_data.take(1):
+    #         dec_mask = create_masks_decoder(cap)
+    #         ckpt_manager = checkpoint_manager()
+    #         predictions, _ = transformer(img_tensor, cap, True, dec_mask)
+
+    #         break
+    #     transformer.weights[:253]
 
     main(30, False)
 

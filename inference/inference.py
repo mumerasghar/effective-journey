@@ -61,7 +61,7 @@ def evaluate(image, names, cap_real, tokenize, transformer, img_rcnn=None, show=
 
     for i in range(40):
         dec_mask = create_masks_decoder(output)
-        predictions, attention_weights = transformer(image, output, False, dec_mask, img_rcnn=img_rcnn)
+        predictions, attention_weights = transformer(image, output, False, dec_mask)
         predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
         predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
         if tf.reduce_all(tf.math.equal(predicted_id, end_token)):
