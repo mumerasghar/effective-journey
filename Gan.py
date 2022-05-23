@@ -800,6 +800,7 @@ def main(epochs, o_break=False):
 
     ckpt_manager = tf.train.CheckpointManager(checkpoint, checkpoint_dir, max_to_keep=1)
 
+    transformer.save_weights("latest_weights")
     # if ckpt_manager.latest_checkpoint:
     #     checkpoint.restore(ckpt_manager.latest_checkpoint)
     #     print("Latest checkpoint restored!!")

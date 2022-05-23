@@ -22,7 +22,8 @@ paths = {
     "dataset": cfg["DATASET_NAME"]
 }
 
-dataset, i_data, tokenizer = create_dataset(cfg)
+# dataset, i_data, tokenizer = create_dataset(cfg)
+dataset, i_data, tokenizer = [],[],[]
 
 
 def scaled_dot_product_attention(q, k, v, mask):
@@ -450,6 +451,10 @@ def main(epochs, o_break=False):
     print("going for training")
     ckpt_manager = checkpoint_manager()
 
+    transformer.save_weights('weights')
+    transformer.save('hello')
+    transformer.traiable = False
+
     for epoch in range(epochs):
 
         start = time.time()
@@ -488,7 +493,10 @@ def main(epochs, o_break=False):
 
 
 if __name__ == "__main__":
-    main(30, False)
+    # main(30, False)
+    checkpoint_manager()
+    karpathy_inference(tokenizer, transformer, cfg)
+
 
 else:
     from inference import karpathy_inference

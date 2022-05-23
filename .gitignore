@@ -9,3 +9,5 @@ COCO/*
 weights/*
 pre_trained_weights/*
 tuple.dump
+
+weights.*
